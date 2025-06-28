@@ -1,0 +1,182 @@
+# Agent CEO System - Docker Compose Configuration
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: agent-ceo-postgres
+    environment:
+      POSTGRES_DB: agent_ceo
+      POSTGRES_USER: agent_ceo_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - agent-ceo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent_ceo_user -d agent_ceo"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: agent-ceo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - agent-ceo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # n8n Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: agent-ceo-n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-admin123}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678}
+      - GENERIC_TIMEZONE=${TIMEZONE:-UTC}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=agent_ceo_user
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-secure_password_123}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - agent-ceo-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Flask Backend API
+  backend:
+    build:
+      context: ./backend/agent-ceo-api
+      dockerfile: Dockerfile
+    container_name: agent-ceo-backend
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql://agent_ceo_user:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/agent_ceo
+      - REDIS_URL=redis://redis:6379/0
+      - N8N_URL=http://n8n:5678
+      - N8N_API_KEY=${N8N_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID:-}
+      - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET:-}
+      - SMTP_SERVER=${SMTP_SERVER:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-here}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,https://your-frontend-domain.com}
+    ports:
+      - "5000:5000"
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    networks:
+      - agent-ceo-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      n8n:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agent-ceo-frontend
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_AGENT_CEO_API_URL=${NEXT_PUBLIC_AGENT_CEO_API_URL:-http://localhost:5000}
+      - NEXT_PUBLIC_AGENT_CEO_API_KEY=${NEXT_PUBLIC_AGENT_CEO_API_KEY:-}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-nextauth-secret}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    networks:
+      - agent-ceo-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: agent-ceo-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx.conf:/etc/nginx/nginx.conf
+      - ./infrastructure/ssl:/etc/nginx/ssl
+    networks:
+      - agent-ceo-network
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local
+
+networks:
+  agent-ceo-network:
+    driver: bridge
+

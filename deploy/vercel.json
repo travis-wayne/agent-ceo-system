@@ -1,0 +1,78 @@
+{
+  "name": "agent-ceo-frontend",
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "cd frontend && npm ci",
+  "devCommand": "cd frontend && npm run dev",
+  "env": {
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_AGENT_CEO_API_URL": "@agent-ceo-api-url",
+    "NEXT_PUBLIC_AGENT_CEO_API_KEY": "@agent-ceo-api-key",
+    "NEXTAUTH_SECRET": "@nextauth-secret",
+    "NEXTAUTH_URL": "@nextauth-url"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "functions": {
+    "frontend/src/app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/agent-ceo/(.*)",
+      "destination": "$NEXT_PUBLIC_AGENT_CEO_API_URL/api/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-API-Key"
+        }
+      ]
+    }
+  ],
+  "regions": ["iad1"],
+  "github": {
+    "enabled": true,
+    "autoAlias": true
+  }
+}
+

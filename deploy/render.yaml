@@ -1,0 +1,154 @@
+# Agent CEO System - Render Deployment Configuration
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: agent-ceo-postgres
+    env: docker
+    plan: starter
+    dockerfilePath: ./infrastructure/postgres.Dockerfile
+    envVars:
+      - key: POSTGRES_DB
+        value: agent_ceo
+      - key: POSTGRES_USER
+        value: agent_ceo_user
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+    disk:
+      name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10
+
+  # Redis Cache
+  - type: redis
+    name: agent-ceo-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+
+  # Flask Backend API
+  - type: web
+    name: agent-ceo-backend
+    env: docker
+    plan: starter
+    dockerfilePath: ./backend/agent-ceo-api/Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agent-ceo-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: agent-ceo-redis
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: N8N_URL
+        fromService:
+          type: web
+          name: agent-ceo-n8n
+          property: host
+    buildCommand: |
+      cd backend/agent-ceo-api
+      pip install -r requirements.txt
+    startCommand: python src/main.py
+
+  # n8n Workflow Automation
+  - type: web
+    name: agent-ceo-n8n
+    env: docker
+    plan: starter
+    dockerfilePath: ./infrastructure/n8n.Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: true
+      - key: N8N_BASIC_AUTH_USER
+        value: admin
+      - key: N8N_BASIC_AUTH_PASSWORD
+        generateValue: true
+      - key: N8N_HOST
+        fromService:
+          type: web
+          name: agent-ceo-n8n
+          property: host
+      - key: N8N_PORT
+        value: 5678
+      - key: N8N_PROTOCOL
+        value: https
+      - key: WEBHOOK_URL
+        fromService:
+          type: web
+          name: agent-ceo-n8n
+          property: host
+      - key: GENERIC_TIMEZONE
+        value: UTC
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        fromDatabase:
+          name: agent-ceo-postgres
+          property: host
+      - key: DB_POSTGRESDB_PORT
+        fromDatabase:
+          name: agent-ceo-postgres
+          property: port
+      - key: DB_POSTGRESDB_DATABASE
+        value: n8n
+      - key: DB_POSTGRESDB_USER
+        fromDatabase:
+          name: agent-ceo-postgres
+          property: user
+      - key: DB_POSTGRESDB_PASSWORD
+        fromDatabase:
+          name: agent-ceo-postgres
+          property: password
+    disk:
+      name: n8n-data
+      mountPath: /home/node/.n8n
+      sizeGB: 5
+
+  # Next.js Frontend
+  - type: web
+    name: agent-ceo-frontend
+    env: docker
+    plan: starter
+    dockerfilePath: ./frontend/Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_AGENT_CEO_API_URL
+        fromService:
+          type: web
+          name: agent-ceo-backend
+          property: host
+      - key: NEXT_PUBLIC_AGENT_CEO_API_KEY
+        sync: false
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        fromService:
+          type: web
+          name: agent-ceo-frontend
+          property: host
+    buildCommand: |
+      cd frontend
+      npm ci
+      npm run build
+    startCommand: npm start
+
+databases:
+  - name: agent-ceo-postgres
+    databaseName: agent_ceo
+    user: agent_ceo_user
+    plan: starter
+
