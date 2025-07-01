@@ -1,49 +1,64 @@
 import { Icons } from "@/components/icons";
-import { BorderText } from "@/components/ui/border-number";
 import { siteConfig } from "@/lib/config";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
-export function Footer() {
+export default function Footer() {
   return (
-    <footer className="flex flex-col gap-y-5 rounded-lg px-7 py-5 container">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-x-2">
-          <Icons.logo className="h-5 w-5" />
-          <h2 className="text-lg font-bold text-foreground">
-            {siteConfig.name}
-          </h2>
-        </div>
+    <footer>
+      <div className="max-w-6xl mx-auto py-16 sm:px-10 px-5 pb-0">
+        <a
+          href="/"
+          title={siteConfig.name}
+          className="relative mr-6 flex items-center space-x-2"
+        >
+          <Icons.logo className="w-auto h-[40px]" />
+          <span className="font-bold text-xl">{siteConfig.name}</span>
+        </a>
 
-        <div className="flex gap-x-2">
-          {siteConfig.footer.socialLinks.map((link, index) => (
-            <a
-              key={index}
-              href={link.url}
-              className="flex h-5 w-5 items-center justify-center text-muted-foreground transition-all duration-100 ease-linear hover:text-foreground hover:underline hover:underline-offset-4"
-            >
-              {link.icon}
-            </a>
+        <div className="grid md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 mt-8">
+          {siteConfig.footer.map((section, index) => (
+            <div key={index} className="mb-5">
+              <h2 className="font-semibold">{section.title}</h2>
+              <ul>
+                {section.links.map((link, linkIndex) => (
+                  <li key={linkIndex} className="my-2">
+                    <Link
+                      href={link.href}
+                      className="group inline-flex cursor-pointer items-center justify-start gap-1 text-muted-foreground duration-200 hover:text-foreground hover:opacity-90"
+                    >
+                      {link.icon && link.icon}
+                      {link.text}
+                      <ChevronRight className="h-4 w-4 translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
-      </div>
-      <div className="flex flex-col justify-between gap-y-5 md:flex-row md:items-center">
-        <ul className="flex flex-col gap-x-5 gap-y-2 text-muted-foreground md:flex-row md:items-center">
-          {siteConfig.footer.links.map((link, index) => (
-            <li
-              key={index}
-              className="text-[15px]/normal font-medium text-muted-foreground transition-all duration-100 ease-linear hover:text-foreground hover:underline hover:underline-offset-4"
-            >
-              <a href={link.url}>{link.text}</a>
+        <div className="max-w-6xl mx-auto border-t py-2 grid md:grid-cols-2 h-full justify-between w-full grid-cols-1 gap-1">
+          <span className="text-sm tracking-tight text-foreground">
+            Copyright © {new Date().getFullYear()}{" "}
+            <Link href="/" className="cursor-pointer">
+              {siteConfig.name}
+            </Link>{" "}
+            - {siteConfig.description}
+          </span>
+          <ul className="flex justify-start md:justify-end text-sm tracking-tight text-foreground">
+            <li className="mr-3 md:mx-4">
+              <Link href="#" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </Link>
             </li>
-          ))}
-        </ul>
-        <div className="flex items-center justify-between text-sm font-medium tracking-tight text-muted-foreground">
-          <p>{siteConfig.footer.bottomText}</p>
+            <li className="mr-3 md:mx-4">
+              <Link href="#" target="_blank" rel="noopener noreferrer">
+                Terms of Service
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
-      <BorderText
-        text={siteConfig.footer.brandText}
-        className="text-[clamp(3rem,15vw,10rem)] overflow-hidden font-mono tracking-tighter font-medium"
-      />
     </footer>
   );
 }

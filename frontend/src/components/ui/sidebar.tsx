@@ -33,7 +33,7 @@ const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContext = {
-  state: "expanded" | "collapsed";
+  state: "expanded";
   open: boolean;
   setOpen: (open: boolean) => void;
   openMobile: boolean;
@@ -124,7 +124,7 @@ const SidebarProvider = React.forwardRef<
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
-        state,
+        state: state as "expanded",
         open,
         setOpen,
         isMobile,
@@ -593,7 +593,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          // hidden={state === "collapsed" ? false : isMobile}
           {...tooltip}
         />
       </Tooltip>

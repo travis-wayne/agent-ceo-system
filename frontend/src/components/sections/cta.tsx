@@ -1,17 +1,28 @@
+import { Icons } from "@/components/icons";
 import { Section } from "@/components/section";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
-export function CTA() {
+export default function CtaSection() {
   return (
-    <Section id="cta">
-      <div className="border overflow-hidden relative text-center py-16 mx-auto">
-        <p className="max-w-3xl text-foreground mb-6 text-balance mx-auto font-medium text-3xl">
-          Ready to build your next AI agent?
-        </p>
-
-        <div className="flex justify-center">
-          <Button className="flex items-center gap-2">Get Started</Button>
-        </div>
+    <Section
+      id="cta"
+      title="Klar til å komme i gang?"
+      subtitle="Start din gratis prøveperiode i dag."
+      className="bg-primary/10 rounded-xl py-16"
+    >
+      <div className="flex flex-col w-full sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 pt-4">
+        <Link
+          href="/signup"
+          className={cn(
+            buttonVariants({ variant: "default" }),
+            "w-full sm:w-auto text-background flex gap-2"
+          )}
+        >
+          <Icons.logo className="h-6 w-6" />
+          Prøv gratis nå
+        </Link>
       </div>
     </Section>
   );

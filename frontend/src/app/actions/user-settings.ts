@@ -8,7 +8,9 @@ import { z } from "zod";
 // Schema for profile update
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
-  image: z.string().url().optional().nullable(),
+  image: z.string().optional().refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
+    message: "Must be a valid URL"
+  }).transform((val) => val === "" ? null : val),
   phone: z.string().optional(),
 });
 
@@ -55,7 +57,7 @@ export async function updateUserProfile(formData: FormData) {
     await auth.api.updateUser({
       body: {
         name: validatedData.name,
-        image: validatedData.image,
+        image: validatedData.image || undefined,
         phone: validatedData.phone,
       },
       headers: await headers(),

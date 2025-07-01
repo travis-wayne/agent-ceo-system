@@ -17,6 +17,23 @@ import {
   IconBuildingSkyscraper,
   IconAd,
   IconInbox,
+  IconRobot,
+  IconBuilding,
+  IconTrendingUp,
+  IconUserCheck,
+  IconHelpCircle,
+  IconBrain,
+  IconListCheck,
+  IconBulb,
+  IconMailBolt,
+  IconChartBar,
+  IconBrandTwitter,
+  IconGitBranch,
+  IconChartPie,
+  IconTarget,
+  IconPhone,
+  IconBriefcase,
+  IconMessageCircle,
 } from "@tabler/icons-react";
 
 import {
@@ -50,65 +67,145 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Sidebar navigation data
   const data = {
+    user: {
+      name: session?.user?.name || "Guest",
+      email: session?.user?.email || "",
+      avatar: session?.user?.image || "",
+    },
+    teams: [
+      {
+        name: "Agent CEO Platform",
+        logo: IconRobot,
+        plan: "Enterprise",
+      },
+    ],
     navMain: [
       {
-        title: "Dashboard",
-        url: "/",
+        title: "AI Agent CEO",
+        url: "#",
+        icon: IconRobot,
+        isActive: true,
+        items: [
+          {
+            title: "CEO Dashboard",
+            url: "/dashboard/ceo",
         icon: IconDashboard,
       },
       {
-        title: "Inbox",
-        url: "/inbox",
-        icon: IconInbox,
-        badge: <InboxBadge />,
+            title: "AI Agents",
+            url: "/dashboard/ceo/agents",
+            icon: IconBrain,
+          },
+          {
+            title: "Tasks",
+            url: "/dashboard/ceo/tasks",
+            icon: IconListCheck,
+          },
+          {
+            title: "Strategic Intelligence",
+            url: "/dashboard/ceo/strategic",
+            icon: IconBulb,
+          },
+          {
+            title: "Email Automation",
+            url: "/dashboard/ceo/email",
+            icon: IconMailBolt,
+          },
+          {
+            title: "Data Analytics",
+            url: "/dashboard/ceo/data",
+            icon: IconChartBar,
+          },
+          {
+            title: "Social Media",
+            url: "/dashboard/ceo/social",
+            icon: IconBrandTwitter,
+          },
+          {
+            title: "Workflows",
+            url: "/dashboard/ceo/workflows",
+            icon: IconGitBranch,
+          },
+        ],
+      },
+      {
+        title: "CRM & Business",
+        url: "#",
+        icon: IconBuilding,
+        items: [
+          {
+            title: "CRM Dashboard",
+            url: "/dashboard/crm",
+            icon: IconChartPie,
       },
       {
         title: "Leads",
-        url: "/leads",
-        icon: IconUsers,
+            url: "/dashboard/crm/leads",
+            icon: IconTarget,
       },
       {
-        title: "Personer",
-        url: "/customers",
+            title: "Customers",
+            url: "/dashboard/crm/customers",
         icon: IconUserCircle,
       },
       {
-        title: "Bedrifter",
-        url: "/businesses",
+            title: "Businesses",
+            url: "/dashboard/crm/businesses",
         icon: IconBuildingSkyscraper,
-      },
-      {
-        title: "Annonser",
-        url: "/ads",
-        icon: IconBuildingStore,
-      },
-      {
-        title: "Jobbsøknader",
-        url: "/applications",
-        icon: IconUserSearch,
+          },
+          {
+            title: "Applications",
+            url: "/dashboard/crm/applications",
+            icon: IconUserSearch,
+          },
+          {
+            title: "Tickets",
+            url: "/dashboard/crm/tickets",
+            icon: IconTicket,
+          },
+          {
+            title: "Inbox",
+            url: "/dashboard/crm/inbox",
+            icon: IconInbox,
+          },
+          {
+            title: "Advertising",
+            url: "/dashboard/crm/ads",
+            icon: IconAd,
+          },
+        ],
       },
     ],
-    support: [
+    projects: [
       {
-        name: "Tickets",
-        url: "/tickets",
-        icon: IconTicket,
-        badge: <TicketBadge />,
+        name: "Market Analysis Q2",
+        url: "#",
+        icon: IconTrendingUp,
+      },
+      {
+        name: "Sales Automation",
+        url: "#",
+        icon: IconUsers,
+      },
+      {
+        name: "Customer Success",
+        url: "#",
+        icon: IconUserCheck,
       },
     ],
     navSecondary: [
       {
-        title: "Innstillinger",
+        title: "Settings",
         url: "/settings",
         icon: IconSettings,
       },
       {
-        title: "Få hjelp",
-        url: "#",
-        icon: IconHelp,
+        title: "Status",
+        url: "/status",
+        icon: IconHelpCircle,
       },
       {
-        title: "Søk",
+        title: "Search",
         url: "#",
         icon: IconSearch,
         action: toggleCommandPalette,
@@ -120,9 +217,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navMainWithActive = data.navMain.map((item) => ({
     ...item,
     isActive: isActivePath(item.url),
+    items: item.items?.map((subItem) => ({
+      ...subItem,
+      isActive: isActivePath(subItem.url),
+    })),
   }));
 
-  const supportWithActive = data.support.map((item) => ({
+  const projectsWithActive = data.projects.map((item) => ({
     ...item,
     isActive: isActivePath(item.url),
   }));
@@ -133,7 +234,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }));
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -143,7 +244,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Sailsdock</span>
+                <span className="text-base font-semibold">AGENT CEO</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -151,7 +252,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainWithActive} />
-        <NavDocuments items={supportWithActive} title="Support" />
+        <NavDocuments items={projectsWithActive} title="Projects" />
         <NavSecondary items={navSecondaryWithActive} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
