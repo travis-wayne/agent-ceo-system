@@ -120,6 +120,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: IconMailBolt,
           },
           {
+            title: "AI Chat",
+            url: "/dashboard/ceo/chat",
+            icon: IconMessageCircle,
+          },
+          {
             title: "Data Analytics",
             url: "/dashboard/ceo/data",
             icon: IconChartBar,

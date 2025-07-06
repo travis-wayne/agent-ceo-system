@@ -71,6 +71,7 @@ import {
 } from "lucide-react"
 import { AppLayout } from "@/components/app-layout"
 import { toast } from "sonner"
+import { PageHeader } from "@/components/page-header";
 
 const messages = [
   {
@@ -112,6 +113,51 @@ function ConversationPromptInput() {
   const [isLoading, setIsLoading] = useState(false)
   const [chatMessages, setChatMessages] = useState(messages)
   const [showReasoning, setShowReasoning] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        })
+      }
+    }
+
+    // Small delay to ensure DOM is updated
+    const timeoutId = setTimeout(scrollToBottom, 100)
+    return () => clearTimeout(timeoutId)
+  }, [chatMessages, isLoading])
+
+  // Handle scroll events to show/hide scroll button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+        const isScrolledUp = scrollHeight - scrollTop - clientHeight > 100
+        setShowScrollButton(isScrolledUp)
+      }
+    }
+
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener('scroll', handleScroll)
+      return () => container.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end'
+      })
+    }
+  }
 
   const handleSubmit = () => {
     if (!prompt.trim()) return
@@ -143,22 +189,14 @@ function ConversationPromptInput() {
 
   return (
     <AppLayout>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <div className="flex items-center gap-2">
-          <div className="text-sm text-muted-foreground">
-            Dashboard / Chat / AI Chat
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        items={[
+          { label: "CEO Dashboard", href: "/dashboard/ceo" },
+          { label: "AI Chat", isCurrentPage: true },
+        ]}
+      />
       
       <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">AI Chat</h1>
-          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
-            Built with the actual prompt-kit library
-          </p>
-        </div>
-
         {/* Chat Interface */}
         <Card className="flex flex-col max-h-[70vh] mb-8">
           <CardHeader className="border-b flex-shrink-0">
@@ -171,8 +209,8 @@ function ConversationPromptInput() {
             </CardDescription>
           </CardHeader>
           
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto px-4 py-6">
+          <div className="flex-1 flex flex-col min-h-0 relative">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6">
               <div className="space-y-6">
                 {chatMessages.map((message, index) => {
                   const isAssistant = message.role === "assistant"
@@ -284,7 +322,20 @@ function ConversationPromptInput() {
                     </Message>
                   )
                 })}
+                {/* Invisible element to scroll to */}
+                <div ref={messagesEndRef} />
               </div>
+              
+              {/* Scroll to bottom button */}
+              {showScrollButton && (
+                <Button
+                  onClick={scrollToBottom}
+                  size="sm"
+                  className="absolute bottom-4 right-4 rounded-full shadow-lg z-10"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             
             <div className="border-t p-4 flex-shrink-0">
