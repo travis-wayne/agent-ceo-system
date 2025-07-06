@@ -6,7 +6,6 @@ import {
   Users,
   ArrowUpRight,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppLayout } from "@/components/app-layout";
@@ -17,7 +16,10 @@ import { UpcomingActivities } from "@/components/dashboard/upcoming-activities";
 import { getUpcomingActivities } from "../../../actions/activities";
 import { TicketDistributionChart } from "@/components/dashboard/ticket-distribution-chart";
 import { SupportOverview } from "@/components/dashboard/support-overview";
-import { PageHeader } from "@/components/page-header";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { ProgressMetric } from "@/components/ui/progress-metric";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 export default async function CeoDashboard() {
   try {
@@ -75,90 +77,112 @@ export default async function CeoDashboard() {
 
     const totalPotentialValue = potentialValueResult._sum.potensiellVerdi || 0;
 
+    // Prepare stat cards data
+    const statCards = [
+      {
+        title: "New Leads",
+        value: leadsCount.toString(),
+        description: "Leads not yet contacted",
+        icon: Users,
+        trend: null,
+        trendUp: null,
+      },
+      {
+        title: "In Dialogue",
+        value: (prospectsCount + qualifiedCount).toString(),
+        description: "Prospects and qualified leads",
+        icon: Activity,
+        trend: null,
+        trendUp: null,
+        badges: [
+          { label: `${prospectsCount} Contacted`, variant: "secondary" as const },
+          { label: `${qualifiedCount} Qualified`, variant: "outline" as const },
+        ],
+      },
+      {
+        title: "Customers",
+        value: customersCount.toString(),
+        description: "Active customers",
+        icon: Building2,
+        trend: null,
+        trendUp: null,
+      },
+      {
+        title: "Potential Value",
+        value: new Intl.NumberFormat("no-NO", {
+          style: "currency",
+          currency: "NOK",
+          maximumFractionDigits: 0,
+        }).format(totalPotentialValue),
+        description: "Total potential value in pipeline",
+        icon: DollarSign,
+        trend: null,
+        trendUp: null,
+      },
+    ];
+
+    // Prepare pipeline progress data
+    const totalCount = leadsCount + prospectsCount + qualifiedCount + customersCount;
+    const pipelineData = [
+      {
+        label: "New leads",
+        value: leadsCount,
+        percentage: totalCount > 0 ? (leadsCount / totalCount) * 100 : 0,
+        color: "bg-blue-300",
+      },
+      {
+        label: "Contacted",
+        value: prospectsCount,
+        percentage: totalCount > 0 ? (prospectsCount / totalCount) * 100 : 0,
+        color: "bg-indigo-300",
+      },
+      {
+        label: "Qualified",
+        value: qualifiedCount,
+        percentage: totalCount > 0 ? (qualifiedCount / totalCount) * 100 : 0,
+        color: "bg-purple-300",
+      },
+      {
+        label: "Customers",
+        value: customersCount,
+        percentage: totalCount > 0 ? (customersCount / totalCount) * 100 : 0,
+        color: "bg-green-300",
+      },
+    ];
+
+    const headerActions = [
+      {
+        label: "View all leads",
+        href: "/leads",
+        variant: "outline" as const,
+        icon: ArrowUpRight,
+      },
+      {
+        label: "Create new lead",
+        href: "/leads/new",
+        variant: "default" as const,
+        icon: ArrowUpRight,
+        disabled: true,
+      },
+    ];
+
     return (
       <AppLayout>
-        <PageHeader
-        items={[
-          { label: "Dashboard", href: "/dashboard/ceo" },
-          { label: "CEO Dashboard", isCurrentPage: true },
-        ]}
-      />
+        <PageHeaderWithActions
+          title="CRM Dashboard"
+          description="Overview of your pipeline and activities"
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard/ceo" },
+            { label: "CEO Dashboard", isCurrentPage: true },
+          ]}
+          actions={headerActions}
+        />
         <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
-          <div className="mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">CRM Dashboard</h1>
-            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
-              Overview of your pipeline and activities
-            </p>
-          </div>
-
           {/* Main metric cards */}
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">New Leads</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{leadsCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Leads not yet contacted
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">In Dialogue</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {prospectsCount + qualifiedCount}
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="text-xs">
-                    {prospectsCount} Contacted
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {qualifiedCount} Qualified
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Customers</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{customersCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Active customers
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Potential Value
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {new Intl.NumberFormat("no-NO", {
-                    style: "currency",
-                    currency: "NOK",
-                    maximumFractionDigits: 0,
-                  }).format(totalPotentialValue)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Total potential value in pipeline
-                </p>
-              </CardContent>
-            </Card>
+            {statCards.map((stat, index) => (
+              <StatCard key={index} {...stat} />
+            ))}
           </div>
 
           {/* Main dashboard content - three columns on large screens */}
@@ -176,103 +200,15 @@ export default async function CeoDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">New leads</div>
-                    <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="bg-blue-300 h-full"
-                        style={{
-                          width: `${
-                            (leadsCount /
-                              Math.max(
-                                1,
-                                leadsCount +
-                                  prospectsCount +
-                                  qualifiedCount +
-                                  customersCount
-                              )) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
-                    <div className="w-8 text-right text-sm">{leadsCount}</div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Contacted</div>
-                    <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="bg-indigo-300 h-full"
-                        style={{
-                          width: `${
-                            (prospectsCount /
-                              Math.max(
-                                1,
-                                leadsCount +
-                                  prospectsCount +
-                                  qualifiedCount +
-                                  customersCount
-                              )) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
-                    <div className="w-8 text-right text-sm">
-                      {prospectsCount}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Qualified</div>
-                    <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="bg-purple-300 h-full"
-                        style={{
-                          width: `${
-                            (qualifiedCount /
-                              Math.max(
-                                1,
-                                leadsCount +
-                                  prospectsCount +
-                                  qualifiedCount +
-                                  customersCount
-                              )) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
-                    <div className="w-8 text-right text-sm">
-                      {qualifiedCount}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Customers</div>
-                    <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="bg-green-300 h-full"
-                        style={{
-                          width: `${
-                            (customersCount /
-                              Math.max(
-                                1,
-                                leadsCount +
-                                  prospectsCount +
-                                  qualifiedCount +
-                                  customersCount
-                              )) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
-                    <div className="w-8 text-right text-sm">
-                      {customersCount}
-                    </div>
-                  </div>
+                  {pipelineData.map((item, index) => (
+                    <ProgressMetric
+                      key={index}
+                      label={item.label}
+                      value={item.value}
+                      percentage={item.percentage}
+                      color={item.color}
+                    />
+                  ))}
                 </div>
 
                 <div className="mt-6">
@@ -308,22 +244,16 @@ export default async function CeoDashboard() {
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center justify-between">
                             <p className="font-medium">{lead.name}</p>
-                            <Badge
-                              variant={
+                            <StatusBadge
+                              status={
                                 lead.stage === "lead"
-                                  ? "secondary"
+                                  ? "new"
                                   : lead.stage === "prospect"
-                                  ? "default"
-                                  : "outline"
+                                  ? "active"
+                                  : "qualified"
                               }
-                              className="text-xs"
-                            >
-                              {lead.stage === "lead"
-                                ? "New"
-                                : lead.stage === "prospect"
-                                ? "Contacted"
-                                : "Qualified"}
-                            </Badge>
+                              size="sm"
+                            />
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {lead.contactPerson || lead.email}

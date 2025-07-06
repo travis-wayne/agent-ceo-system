@@ -4,11 +4,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout } from "@/components/app-layout";
-import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ProgressMetric } from "@/components/ui/progress-metric";
+import { TabbedContentLayout } from "@/components/ui/tabbed-content-layout";
+import { useAgent } from "@/lib/agents/agent-context";
+import Link from "next/link";
+import { toast } from "sonner";
 import {
   BarChart3,
   TrendingUp,
@@ -36,820 +42,646 @@ import {
   Award,
   Shield,
   Lightbulb,
-  FileText
+  FileText,
+  Edit,
+  Eye,
+  Settings,
+  Rocket,
+  Plus
 } from "lucide-react";
 
-// Mock analytics data following the workflow guide
-const agentPerformanceData = {
-  overview: {
-    totalAgents: 5,
-    activeAgents: 4,
-    totalTasks: 142,
-    avgSuccessRate: 94.8,
-    totalRevenue: 231860,
-    avgEfficiency: 92.4,
-    totalCostSavings: 47500,
-    avgResponseTime: 3.2
-  },
-  
-  agentMetrics: [
-    {
-      id: "ceo_agent",
-      name: "CEO Agent",
-      type: "Strategic Intelligence",
-      avatar: "🧠",
-      status: "active",
-      performance: {
-        successRate: 94.8,
-        efficiency: 96.0,
-        tasksCompleted: 147,
-        avgResponseTime: 4.2,
-        businessImpact: 9.2,
-        costPerHour: 285,
-        revenueGenerated: 52340,
-        utilizationRate: 87,
-        qualityScore: 9.1,
-        clientSatisfaction: 4.9
-      },
-      trends: {
-        successRate: { value: 2.3, direction: "up" },
-        efficiency: { value: 1.5, direction: "up" },
-        businessImpact: { value: 0.8, direction: "up" },
-        responseTime: { value: -0.5, direction: "down" }
-      },
-      recentTasks: [
-        { name: "Market Analysis Q4 2024", completion: 100, impact: 9.5, duration: 3.2 },
-        { name: "Competitive Intelligence", completion: 85, impact: 8.8, duration: 4.1 },
-        { name: "Strategic Planning", completion: 100, impact: 9.8, duration: 2.8 }
-      ]
-    },
-    {
-      id: "sales_agent",
-      name: "Sales Agent",
-      type: "Revenue Generation",
-      avatar: "💼",
-      status: "active",
-      performance: {
-        successRate: 96.2,
-        efficiency: 94.0,
-        tasksCompleted: 203,
-        avgResponseTime: 2.8,
-        businessImpact: 8.9,
-        costPerHour: 195,
-        revenueGenerated: 78450,
-        utilizationRate: 92,
-        qualityScore: 8.7,
-        clientSatisfaction: 4.8
-      },
-      trends: {
-        successRate: { value: 1.2, direction: "up" },
-        efficiency: { value: 0.8, direction: "up" },
-        businessImpact: { value: 0.3, direction: "up" },
-        responseTime: { value: -0.3, direction: "down" }
-      },
-      recentTasks: [
-        { name: "Lead Generation Campaign", completion: 100, impact: 9.1, duration: 2.1 },
-        { name: "Sales Pipeline Optimization", completion: 100, impact: 8.9, duration: 2.5 },
-        { name: "Customer Qualification", completion: 95, impact: 8.6, duration: 1.8 }
-      ]
-    },
-    {
-      id: "marketing_agent",
-      name: "Marketing Agent",
-      type: "Brand & Content",
-      avatar: "🎨",
-      status: "active",
-      performance: {
-        successRate: 91.7,
-        efficiency: 89.0,
-        tasksCompleted: 178,
-        avgResponseTime: 3.5,
-        businessImpact: 8.4,
-        costPerHour: 165,
-        revenueGenerated: 45230,
-        utilizationRate: 85,
-        qualityScore: 8.3,
-        clientSatisfaction: 4.7
-      },
-      trends: {
-        successRate: { value: 0.9, direction: "up" },
-        efficiency: { value: 1.2, direction: "up" },
-        businessImpact: { value: 0.5, direction: "up" },
-        responseTime: { value: 0.2, direction: "up" }
-      },
-      recentTasks: [
-        { name: "Content Calendar Q4", completion: 100, impact: 8.7, duration: 3.2 },
-        { name: "Brand Strategy Update", completion: 90, impact: 8.1, duration: 4.1 },
-        { name: "Social Media Campaign", completion: 100, impact: 8.5, duration: 2.9 }
-      ]
-    },
-    {
-      id: "operations_agent",
-      name: "Operations Agent",
-      type: "Process Optimization",
-      avatar: "⚙️",
-      status: "maintenance",
-      performance: {
-        successRate: 93.5,
-        efficiency: 91.0,
-        tasksCompleted: 98,
-        avgResponseTime: 5.1,
-        businessImpact: 8.7,
-        costPerHour: 215,
-        revenueGenerated: 34870,
-        utilizationRate: 73,
-        qualityScore: 8.9,
-        clientSatisfaction: 4.6
-      },
-      trends: {
-        successRate: { value: -0.5, direction: "down" },
-        efficiency: { value: 0.3, direction: "up" },
-        businessImpact: { value: 0.2, direction: "up" },
-        responseTime: { value: 0.8, direction: "up" }
-      },
-      recentTasks: [
-        { name: "Workflow Optimization", completion: 85, impact: 9.2, duration: 4.8 },
-        { name: "System Maintenance", completion: 100, impact: 7.5, duration: 6.2 },
-        { name: "Process Automation", completion: 75, impact: 8.8, duration: 5.5 }
-      ]
-    },
-    {
-      id: "analytics_agent",
-      name: "Analytics Agent",
-      type: "Data Intelligence",
-      avatar: "📊",
-      status: "active",
-      performance: {
-        successRate: 97.1,
-        efficiency: 92.0,
-        tasksCompleted: 156,
-        avgResponseTime: 3.8,
-        businessImpact: 8.8,
-        costPerHour: 175,
-        revenueGenerated: 20970,
-        utilizationRate: 88,
-        qualityScore: 9.3,
-        clientSatisfaction: 4.8
-      },
-      trends: {
-        successRate: { value: 1.8, direction: "up" },
-        efficiency: { value: 2.1, direction: "up" },
-        businessImpact: { value: 0.6, direction: "up" },
-        responseTime: { value: -0.4, direction: "down" }
-      },
-      recentTasks: [
-        { name: "Performance Analytics", completion: 100, impact: 9.1, duration: 3.1 },
-        { name: "Predictive Modeling", completion: 95, impact: 9.5, duration: 4.2 },
-        { name: "Business Intelligence", completion: 100, impact: 8.6, duration: 2.8 }
-      ]
-    }
-  ],
-
-  businessImpact: {
-    totalROI: 425,
-    costSavings: 47500,
-    revenueGenerated: 231860,
-    efficiencyGains: 28,
-    customerSatisfaction: 4.76,
-    timesSaved: 156,
-    processesOptimized: 23,
-    decisionsSupported: 89
-  },
-
-  predictions: {
-    nextMonth: {
-      expectedTasks: 180,
-      projectedRevenue: 285000,
-      expectedEfficiency: 94.2,
-      riskLevel: "low"
-    },
-    nextQuarter: {
-      expectedTasks: 520,
-      projectedRevenue: 820000,
-      expectedEfficiency: 95.8,
-      riskLevel: "low"
-    }
-  }
-};
-
 export default function AgentAnalyticsPage() {
-  const [timeframe, setTimeframe] = useState("month");
-  const [selectedAgent, setSelectedAgent] = useState("all");
+  const { agents, isLoading, refreshAgents, setSelectedAgent } = useAgent();
+  const [selectedTimeframe, setSelectedTimeframe] = useState("7d");
+  const [selectedAgentFilter, setSelectedAgentFilter] = useState("all");
+
+  // Calculate overall statistics
+  const overallStats = {
+    totalAgents: agents.length,
+    activeAgents: agents.filter(a => a.status === 'active').length,
+    totalTasks: agents.reduce((sum, agent) => sum + agent.performance.tasksCompleted, 0),
+    avgSuccessRate: agents.reduce((sum, agent) => sum + agent.performance.successRate, 0) / agents.length,
+    totalRevenue: agents.reduce((sum, agent) => sum + agent.performance.revenueGenerated, 0),
+    avgEfficiency: agents.reduce((sum, agent) => sum + agent.performance.efficiency, 0) / agents.length,
+    totalCostSavings: 47500,
+    avgResponseTime: agents.reduce((sum, agent) => sum + agent.performance.avgResponseTime, 0) / agents.length
+  };
 
   const getTrendIcon = (direction: string) => {
-    return direction === "up" ? 
-      <ArrowUp className="h-4 w-4 text-green-500" /> : 
-      <ArrowDown className="h-4 w-4 text-red-500" />;
+    if (direction === "up") return <TrendingUp className="h-4 w-4 text-green-500" />;
+    if (direction === "down") return <TrendingDown className="h-4 w-4 text-red-500" />;
+    return <Activity className="h-4 w-4 text-gray-500" />;
   };
 
   const getTrendColor = (direction: string) => {
-    return direction === "up" ? "text-green-600" : "text-red-600";
+    if (direction === "up") return "text-green-600";
+    if (direction === "down") return "text-red-600";
+    return "text-gray-600";
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500/10 text-green-600 border-green-500/20';
-      case 'busy': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'maintenance': return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
-      default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+      case "active": return "bg-green-500";
+      case "maintenance": return "bg-yellow-500";
+      case "inactive": return "bg-gray-500";
+      default: return "bg-gray-500";
     }
   };
 
-  const filteredAgents = selectedAgent === "all" 
-    ? agentPerformanceData.agentMetrics 
-    : agentPerformanceData.agentMetrics.filter(agent => agent.id === selectedAgent);
+  const handleAgentAction = (agentId: string, action: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) return;
 
-  return (
-    <AppLayout>
-      <PageHeader
-        items={[
-          { label: "CEO Dashboard", href: "/dashboard/ceo" },
-          { label: "AI Agents", href: "/dashboard/ceo/agents" },
-          { label: "Analytics", isCurrentPage: true },
-        ]}
-      />
-      
-      <main className="p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <BarChart3 className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Agent Performance Analytics</h1>
-              </div>
-              <p className="text-muted-foreground">
-                Comprehensive insights into AI agent performance, business impact, and optimization opportunities
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Last Week</SelectItem>
-                  <SelectItem value="month">Last Month</SelectItem>
-                  <SelectItem value="quarter">Last Quarter</SelectItem>
-                  <SelectItem value="year">Last Year</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
+    setSelectedAgent(agent);
+    
+    switch (action) {
+      case 'edit':
+        window.location.href = `/dashboard/ceo/agents/edit/${agentId}`;
+        break;
+      case 'chat':
+        window.location.href = `/dashboard/ceo/chat?agent=${agentId}`;
+        break;
+      case 'view':
+        toast.info(`Viewing detailed analytics for ${agent.name}`);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Create breadcrumbs
+  const breadcrumbs = [
+    { label: "CEO Dashboard", href: "/dashboard/ceo" },
+    { label: "AI Agents", href: "/dashboard/ceo/agents" },
+    { label: "Analytics" }
+  ];
+
+  // Create header actions
+  const headerActions = [
+    {
+      label: "Filters",
+      onClick: () => {},
+      icon: Filter,
+      variant: "outline" as const
+    },
+    {
+      label: "Export Report",
+      onClick: () => toast.success("Analytics report exported"),
+      icon: Download,
+      variant: "outline" as const
+    },
+    {
+      label: "Refresh Data",
+      onClick: refreshAgents,
+      icon: RefreshCw,
+      variant: "outline" as const
+    }
+  ];
+
+  // Prepare stat cards
+  const statCards = [
+    {
+      title: "Total Agents",
+      value: overallStats.totalAgents.toString(),
+      icon: Cpu,
+      trend: { value: 12.5, isPositive: true, period: "vs last month" }
+    },
+    {
+      title: "Active Agents",
+      value: overallStats.activeAgents.toString(),
+      icon: Activity,
+      trend: { value: 8.3, isPositive: true, period: "vs last week" }
+    },
+    {
+      title: "Tasks Completed",
+      value: overallStats.totalTasks.toString(),
+      icon: Target,
+      trend: { value: 15.7, isPositive: true, period: "vs last month" }
+    },
+    {
+      title: "Avg Success Rate",
+      value: `${overallStats.avgSuccessRate.toFixed(1)}%`,
+      icon: TrendingUp,
+      trend: { value: 2.1, isPositive: true, period: "vs last month" }
+    },
+    {
+      title: "Total Revenue",
+      value: `$${(overallStats.totalRevenue / 1000).toFixed(0)}K`,
+      icon: DollarSign,
+      trend: { value: 18.9, isPositive: true, period: "vs last month" }
+    },
+    {
+      title: "Avg Efficiency",
+      value: `${overallStats.avgEfficiency.toFixed(1)}%`,
+      icon: Zap,
+      trend: { value: 3.4, isPositive: true, period: "vs last month" }
+    }
+  ];
+
+  // Create tabs for different analytics views
+  const tabs = [
+    {
+      id: "overview",
+      label: "Overview",
+      icon: BarChart3,
+      content: (
+        <div className="space-y-6">
+          {/* Agent Performance Grid */}
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+            {agents.map((agent) => (
+              <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">{agent.avatar}</div>
+                      <div>
+                        <CardTitle className="text-lg">{agent.name}</CardTitle>
+                        <CardDescription>{agent.type}</CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <StatusBadge status={agent.status} size="sm" />
+                      <div className="flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAgentAction(agent.id, 'chat')}
+                          title="Chat with Agent"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAgentAction(agent.id, 'edit')}
+                          title="Edit Agent"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAgentAction(agent.id, 'view')}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <p className="text-xl font-bold text-primary">{agent.performance.tasksCompleted}</p>
+                      <p className="text-xs text-muted-foreground">Tasks</p>
+                    </div>
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <p className="text-xl font-bold text-green-600">{agent.performance.successRate}%</p>
+                      <p className="text-xs text-muted-foreground">Success</p>
+                    </div>
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <p className="text-xl font-bold text-blue-600">{agent.performance.efficiency}%</p>
+                      <p className="text-xs text-muted-foreground">Efficiency</p>
+                    </div>
+                  </div>
+
+                  {/* Performance Metrics */}
+                  <div className="space-y-3">
+                    <ProgressMetric
+                      label="Success Rate"
+                      value={agent.performance.successRate}
+                      progress={agent.performance.successRate}
+                      unit="%"
+                      variant={agent.performance.successRate >= 90 ? 'success' : agent.performance.successRate >= 75 ? 'warning' : 'danger'}
+                      size="sm"
+                    />
+                    <ProgressMetric
+                      label="Efficiency"
+                      value={agent.performance.efficiency}
+                      progress={agent.performance.efficiency}
+                      unit="%"
+                      variant={agent.performance.efficiency >= 90 ? 'success' : agent.performance.efficiency >= 75 ? 'warning' : 'danger'}
+                      size="sm"
+                    />
+                    <ProgressMetric
+                      label="Utilization"
+                      value={agent.performance.utilizationRate}
+                      progress={agent.performance.utilizationRate}
+                      unit="%"
+                      variant={agent.performance.utilizationRate >= 80 ? 'success' : agent.performance.utilizationRate >= 60 ? 'warning' : 'danger'}
+                      size="sm"
+                    />
+                  </div>
+
+                  {/* Trends */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Success Rate:</span>
+                      <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.successRate.direction)}`}>
+                        {getTrendIcon(agent.trends.successRate.direction)}
+                        <span className="font-medium">{Math.abs(agent.trends.successRate.value)}%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Efficiency:</span>
+                      <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.efficiency.direction)}`}>
+                        {getTrendIcon(agent.trends.efficiency.direction)}
+                        <span className="font-medium">{Math.abs(agent.trends.efficiency.value)}%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Impact:</span>
+                      <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.businessImpact.direction)}`}>
+                        {getTrendIcon(agent.trends.businessImpact.direction)}
+                        <span className="font-medium">{Math.abs(agent.trends.businessImpact.value)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Response:</span>
+                      <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.responseTime.direction)}`}>
+                        {getTrendIcon(agent.trends.responseTime.direction)}
+                        <span className="font-medium">{Math.abs(agent.trends.responseTime.value)}h</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Tasks */}
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Recent Tasks</h4>
+                    <div className="space-y-2">
+                      {agent.recentTasks.slice(0, 2).map((task, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                          <span className="text-sm truncate">{task.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={task.completion === 100 ? "default" : "secondary"} className="text-xs">
+                              {task.completion}%
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {task.impact}/10
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="pt-2 border-t">
+                    <div className="flex gap-2">
+                      <Link href={`/dashboard/ceo/chat?agent=${agent.id}`} className="flex-1">
+                        <Button size="sm" variant="outline" className="w-full">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Chat
+                        </Button>
+                      </Link>
+                      <Link href={`/dashboard/ceo/agents/edit/${agent.id}`} className="flex-1">
+                        <Button size="sm" variant="outline" className="w-full">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Configure
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
-
-        {/* Overview Statistics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Cpu className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{agentPerformanceData.overview.totalAgents}</p>
-                  <p className="text-xs text-muted-foreground">Total Agents</p>
-                  <p className="text-xs text-green-600 flex items-center mt-1">
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    {agentPerformanceData.overview.activeAgents} active
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">{agentPerformanceData.overview.avgSuccessRate}%</p>
-                  <p className="text-xs text-muted-foreground">Avg Success Rate</p>
-                  <p className="text-xs text-green-600 flex items-center mt-1">
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    +2.1% from last month
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold">${(agentPerformanceData.overview.totalRevenue / 1000).toFixed(0)}K</p>
-                  <p className="text-xs text-muted-foreground">Revenue Generated</p>
-                  <p className="text-xs text-green-600 flex items-center mt-1">
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    +18.5% growth
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Zap className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">{agentPerformanceData.overview.avgEfficiency}%</p>
-                  <p className="text-xs text-muted-foreground">Avg Efficiency</p>
-                  <p className="text-xs text-green-600 flex items-center mt-1">
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    +1.3% improvement
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Analytics Tabs */}
-        <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="business-impact">Business Impact</TabsTrigger>
-            <TabsTrigger value="predictions">Predictions</TabsTrigger>
-            <TabsTrigger value="optimization">Optimization</TabsTrigger>
-          </TabsList>
-
-          {/* Performance Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Agent Performance Metrics</h2>
-              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Agents</SelectItem>
-                  {agentPerformanceData.agentMetrics.map(agent => (
-                    <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-6">
-              {filteredAgents.map((agent) => (
-                <Card key={agent.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-2xl">{agent.avatar}</div>
-                        <div>
-                          <CardTitle className="text-lg">{agent.name}</CardTitle>
-                          <CardDescription>{agent.type}</CardDescription>
-                        </div>
+      )
+    },
+    {
+      id: "performance",
+      label: "Performance",
+      icon: TrendingUp,
+      content: (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1">
+            {agents.map((agent) => (
+              <Card key={agent.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-xl">{agent.avatar}</div>
+                      <div>
+                        <CardTitle className="text-xl">{agent.name}</CardTitle>
+                        <CardDescription>{agent.type}</CardDescription>
                       </div>
-                      <Badge className={getStatusColor(agent.status)}>
-                        {agent.status}
-                      </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                      {/* Core Metrics */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">CORE METRICS</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Success Rate</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{agent.performance.successRate}%</span>
-                              {getTrendIcon(agent.trends.successRate.direction)}
-                              <span className={`text-xs ${getTrendColor(agent.trends.successRate.direction)}`}>
-                                {agent.trends.successRate.value}%
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Efficiency</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{agent.performance.efficiency}%</span>
-                              {getTrendIcon(agent.trends.efficiency.direction)}
-                              <span className={`text-xs ${getTrendColor(agent.trends.efficiency.direction)}`}>
-                                {agent.trends.efficiency.value}%
-                              </span>
-                            </div>
-                          </div>
-                          <Progress value={agent.performance.efficiency} className="h-2" />
-                        </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{agent.performance.tasksCompleted}</p>
+                        <p className="text-xs text-muted-foreground">Total Tasks</p>
                       </div>
-
-                      {/* Performance Metrics */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">PERFORMANCE</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Response Time</span>
-                            <span className="font-medium">{agent.performance.avgResponseTime}h</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Tasks Completed</span>
-                            <span className="font-medium">{agent.performance.tasksCompleted}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Utilization</span>
-                            <span className="font-medium">{agent.performance.utilizationRate}%</span>
-                          </div>
-                        </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{agent.performance.businessImpact}</p>
+                        <p className="text-xs text-muted-foreground">Impact Score</p>
                       </div>
-
-                      {/* Business Metrics */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">BUSINESS IMPACT</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Business Impact</span>
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">{agent.performance.businessImpact}/10</span>
-                              <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Revenue Generated</span>
-                            <span className="font-medium">${(agent.performance.revenueGenerated / 1000).toFixed(0)}K</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Client Satisfaction</span>
-                            <span className="font-medium">{agent.performance.clientSatisfaction}/5</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Recent Tasks */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">RECENT TASKS</h4>
-                        <div className="space-y-2">
-                          {agent.recentTasks.map((task, index) => (
-                            <div key={index} className="p-2 bg-muted/50 rounded text-xs">
-                              <div className="font-medium">{task.name}</div>
-                              <div className="flex justify-between text-muted-foreground mt-1">
-                                <span>{task.completion}% complete</span>
-                                <span>{task.duration}h</span>
-                              </div>
-                            </div>
+                      <div className="text-center">
+                        <div className="flex items-center space-x-1">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < Math.floor(agent.performance.clientSatisfaction)
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"}`} />
                           ))}
                         </div>
+                        <p className="text-xs text-muted-foreground">Client Rating</p>
+                      </div>
+                      <Link href={`/dashboard/ceo/agents/edit/${agent.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Configure
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Task Performance</h4>
+                      <div className="space-y-3">
+                        <ProgressMetric
+                          label="Success Rate"
+                          value={agent.performance.successRate}
+                          progress={agent.performance.successRate}
+                          unit="%"
+                          size="sm"
+                        />
+                        <ProgressMetric
+                          label="Efficiency"
+                          value={agent.performance.efficiency}
+                          progress={agent.performance.efficiency}
+                          unit="%"
+                          size="sm"
+                        />
+                        <ProgressMetric
+                          label="Quality Score"
+                          value={agent.performance.qualityScore}
+                          progress={agent.performance.qualityScore * 10}
+                          unit="/10"
+                          size="sm"
+                        />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
 
-          {/* Business Impact Tab */}
-          <TabsContent value="business-impact" className="space-y-6">
-            <h2 className="text-xl font-semibold">Business Impact Analysis</h2>
-            
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <DollarSign className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-3xl font-bold text-green-600">
-                      {agentPerformanceData.businessImpact.totalROI}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">Total ROI</p>
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Resource Utilization</h4>
+                      <div className="space-y-3">
+                        <ProgressMetric
+                          label="Utilization Rate"
+                          value={agent.performance.utilizationRate}
+                          progress={agent.performance.utilizationRate}
+                          unit="%"
+                          size="sm"
+                        />
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Avg Response Time:</span>
+                          <span className="font-medium">{agent.performance.avgResponseTime}h</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Max Concurrent:</span>
+                          <span className="font-medium">{agent.maxConcurrentTasks} tasks</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Financial Impact</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Revenue Generated:</span>
+                          <span className="font-medium">${agent.performance.revenueGenerated.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Cost per Hour:</span>
+                          <span className="font-medium">${agent.performance.costPerHour}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>ROI:</span>
+                          <span className="font-medium text-green-600">
+                            {((agent.performance.revenueGenerated / (agent.performance.costPerHour * agent.performance.tasksCompleted * 5)) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                      <Link href={`/dashboard/ceo/chat?agent=${agent.id}`} className="block">
+                        <Button size="sm" className="w-full">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Discuss Performance
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <TrendingDown className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                    <p className="text-3xl font-bold text-blue-600">
-                      ${(agentPerformanceData.businessImpact.costSavings / 1000).toFixed(0)}K
-                    </p>
-                    <p className="text-sm text-muted-foreground">Cost Savings</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <Clock className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-                    <p className="text-3xl font-bold text-orange-600">
-                      {agentPerformanceData.businessImpact.timesSaved}h
-                    </p>
-                    <p className="text-sm text-muted-foreground">Time Saved</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <Users className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                    <p className="text-3xl font-bold text-purple-600">
-                      {agentPerformanceData.businessImpact.customerSatisfaction}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Customer Satisfaction</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Efficiency Gains</CardTitle>
-                  <CardDescription>Process improvements and automation benefits</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Overall Efficiency Improvement</span>
-                    <span className="font-bold text-green-600">+{agentPerformanceData.businessImpact.efficiencyGains}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Processes Optimized</span>
-                    <span className="font-medium">{agentPerformanceData.businessImpact.processesOptimized}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Decisions Supported</span>
-                    <span className="font-medium">{agentPerformanceData.businessImpact.decisionsSupported}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Impact</CardTitle>
-                  <CardDescription>Direct and indirect revenue contributions</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Revenue Generated</span>
-                    <span className="font-bold text-green-600">
-                      ${(agentPerformanceData.businessImpact.revenueGenerated / 1000).toFixed(0)}K
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Cost Reduction</span>
-                    <span className="font-medium">
-                      ${(agentPerformanceData.businessImpact.costSavings / 1000).toFixed(0)}K
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Net Business Value</span>
-                    <span className="font-bold text-primary">
-                      ${((agentPerformanceData.businessImpact.revenueGenerated + agentPerformanceData.businessImpact.costSavings) / 1000).toFixed(0)}K
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Predictions Tab */}
-          <TabsContent value="predictions" className="space-y-6">
-            <h2 className="text-xl font-semibold">Predictive Analytics & Forecasts</h2>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Next Month Forecast
-                  </CardTitle>
-                  <CardDescription>Projected performance for next 30 days</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Expected Tasks</span>
-                    <span className="font-bold">{agentPerformanceData.predictions.nextMonth.expectedTasks}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Projected Revenue</span>
-                    <span className="font-bold text-green-600">
-                      ${(agentPerformanceData.predictions.nextMonth.projectedRevenue / 1000).toFixed(0)}K
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Expected Efficiency</span>
-                    <span className="font-bold">{agentPerformanceData.predictions.nextMonth.expectedEfficiency}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Risk Level</span>
-                    <Badge variant="secondary" className="capitalize">
-                      {agentPerformanceData.predictions.nextMonth.riskLevel}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Quarterly Outlook
-                  </CardTitle>
-                  <CardDescription>Strategic projections for next quarter</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Expected Tasks</span>
-                    <span className="font-bold">{agentPerformanceData.predictions.nextQuarter.expectedTasks}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Projected Revenue</span>
-                    <span className="font-bold text-green-600">
-                      ${(agentPerformanceData.predictions.nextQuarter.projectedRevenue / 1000).toFixed(0)}K
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Expected Efficiency</span>
-                    <span className="font-bold">{agentPerformanceData.predictions.nextQuarter.expectedEfficiency}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Risk Level</span>
-                    <Badge variant="secondary" className="capitalize">
-                      {agentPerformanceData.predictions.nextQuarter.riskLevel}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      id: "insights",
+      label: "Insights",
+      icon: Lightbulb,
+      content: (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Performance Trends & Insights</CardTitle>
-                <CardDescription>Key patterns and recommendations based on historical data</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5" />
+                  Top Performers
+                </CardTitle>
+                <CardDescription>Agents with highest performance metrics</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-green-600 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Positive Trends
-                    </h4>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Success rates improving across all agent types
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Response times decreasing with optimization
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Revenue generation exceeding projections
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-orange-600 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      Areas for Improvement
-                    </h4>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                        Operations Agent needs maintenance optimization
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                        Marketing Agent utilization could be improved
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                        Consider scaling high-performing agents
-                      </li>
-                    </ul>
-                  </div>
+                <div className="space-y-3">
+                  {agents
+                    .sort((a, b) => b.performance.businessImpact - a.performance.businessImpact)
+                    .slice(0, 3)
+                    .map((agent, index) => (
+                      <div key={agent.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Badge variant={index === 0 ? "default" : "secondary"}>
+                            #{index + 1}
+                          </Badge>
+                          <div className="text-lg">{agent.avatar}</div>
+                          <div>
+                            <p className="font-medium">{agent.name}</p>
+                            <p className="text-sm text-muted-foreground">Impact: {agent.performance.businessImpact}/10</p>
+                          </div>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Link href={`/dashboard/ceo/chat?agent=${agent.id}`}>
+                            <Button size="sm" variant="outline">
+                              <MessageSquare className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link href={`/dashboard/ceo/agents/edit/${agent.id}`}>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          {/* Optimization Tab */}
-          <TabsContent value="optimization" className="space-y-6">
-            <h2 className="text-xl font-semibold">Optimization Recommendations</h2>
-            
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5 text-yellow-500" />
-                    Smart Recommendations
-                  </CardTitle>
-                  <CardDescription>AI-powered suggestions to improve agent performance</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="border-l-4 border-green-500 pl-4 py-2 bg-green-50 dark:bg-green-950/20">
-                      <h4 className="font-medium text-green-700 dark:text-green-400">High Priority</h4>
-                      <p className="text-sm text-green-600 dark:text-green-300">
-                        Scale CEO Agent capacity by 20% to handle increased strategic analysis demand
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary">Expected ROI: +15%</Badge>
-                        <Badge variant="secondary">Implementation: 2 days</Badge>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5" />
+                  Optimization Opportunities
+                </CardTitle>
+                <CardDescription>Areas for improvement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {agents
+                    .filter(agent => agent.performance.efficiency < 90 || agent.performance.utilizationRate < 80)
+                    .map((agent) => (
+                      <div key={agent.id} className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="text-lg">{agent.avatar}</div>
+                            <span className="font-medium">{agent.name}</span>
+                          </div>
+                            <Link href={`/dashboard/ceo/agents/edit/${agent.id}`}>
+                              <Button size="sm" variant="outline">
+                                <Settings className="h-4 w-4 mr-2" />
+                                Optimize
+                              </Button>
+                            </Link>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            {agent.performance.efficiency < 90 && (
+                              <p className="text-orange-600">• Efficiency below 90% ({agent.performance.efficiency}%)</p>
+                            )}
+                            {agent.performance.utilizationRate < 80 && (
+                              <p className="text-orange-600">• Low utilization ({agent.performance.utilizationRate}%)</p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 dark:bg-blue-950/20">
-                      <h4 className="font-medium text-blue-700 dark:text-blue-400">Medium Priority</h4>
-                      <p className="text-sm text-blue-600 dark:text-blue-300">
-                        Optimize Marketing Agent workflow to reduce average response time by 0.5 hours
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary">Expected ROI: +8%</Badge>
-                        <Badge variant="secondary">Implementation: 1 week</Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="border-l-4 border-orange-500 pl-4 py-2 bg-orange-50 dark:bg-orange-950/20">
-                      <h4 className="font-medium text-orange-700 dark:text-orange-400">Low Priority</h4>
-                      <p className="text-sm text-orange-600 dark:text-orange-300">
-                        Schedule maintenance window for Operations Agent to improve utilization rate
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary">Expected ROI: +5%</Badge>
-                        <Badge variant="secondary">Implementation: 3 days</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )
+    }
+  ];
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="h-5 w-5" />
-                      Performance Optimization
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Task Distribution</span>
-                        <Badge variant="outline">Optimize</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Resource Allocation</span>
-                        <Badge variant="outline">Balanced</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Model Configuration</span>
-                        <Badge variant="outline">Review</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Workflow Efficiency</span>
-                        <Badge variant="outline">Good</Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-2">
+          <RefreshCw className="h-6 w-6 animate-spin" />
+          <span>Loading analytics...</span>
+        </div>
+      </div>
+    );
+  }
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5" />
-                      Cost Optimization
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Budget Utilization</span>
-                        <span className="font-medium">87%</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Cost per Task</span>
-                        <span className="font-medium text-green-600">-12%</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">ROI Efficiency</span>
-                        <span className="font-medium text-green-600">+425%</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Potential Savings</span>
-                        <span className="font-medium">$8.2K/month</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </AppLayout>
+  return (
+    <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+      {/* Page Header */}
+      <PageHeaderWithActions
+        title="Agent Analytics"
+        description="Comprehensive performance analytics and insights for all AI agents"
+        breadcrumbs={breadcrumbs}
+        actions={headerActions}
+        icon={BarChart3}
+        className="mb-6"
+      />
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Select timeframe" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="24h">Last 24 hours</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="90d">Last 90 days</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedAgentFilter} onValueChange={setSelectedAgentFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filter by agent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Agents</SelectItem>
+            {agents.map((agent) => (
+              <SelectItem key={agent.id} value={agent.id}>
+                {agent.avatar} {agent.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Overall Statistics */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-6 mb-6 sm:mb-8">
+        {statCards.map((stat, index) => (
+          <StatCard key={index} {...stat} />
+        ))}
+      </div>
+
+      {/* Analytics Tabs */}
+      <TabbedContentLayout
+        tabs={tabs}
+        defaultTab="overview"
+        className="space-y-4 sm:space-y-6"
+      />
+
+      {/* Quick Actions */}
+      <Card className="mt-6 sm:mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Rocket className="h-5 w-5" />
+            Quick Actions
+          </CardTitle>
+          <CardDescription>
+            Common analytics and management tasks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+            <Button variant="outline" className="h-16 flex-col" onClick={() => toast.success("Performance report generated")}>
+              <FileText className="h-5 w-5 mb-2" />
+              <span>Generate Report</span>
+            </Button>
+            <Link href="/dashboard/ceo/agents">
+              <Button variant="outline" className="h-16 flex-col w-full">
+                <Eye className="h-5 w-5 mb-2" />
+                <span>View All Agents</span>
+              </Button>
+            </Link>
+            <Link href="/dashboard/ceo/agents/new">
+              <Button variant="outline" className="h-16 flex-col w-full">
+                <Plus className="h-5 w-5 mb-2" />
+                <span>Deploy New Agent</span>
+              </Button>
+            </Link>
+            <Link href="/dashboard/ceo/chat">
+              <Button className="h-16 flex-col w-full">
+                <MessageSquare className="h-5 w-5 mb-2" />
+                <span>Start Chat</span>
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </main>
   );
 } 

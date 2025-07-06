@@ -3,10 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AppLayout } from "@/components/app-layout";
-import { PageHeader } from "@/components/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -43,6 +40,10 @@ import {
   PieChart,
   Activity
 } from "lucide-react";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { TabbedContentLayout } from "@/components/ui/tabbed-content-layout";
 
 // Strategic Intelligence Types
 interface AnalysisRecord {
@@ -86,8 +87,6 @@ export default function StrategicIntelligencePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState("overview");
   const router = useRouter();
-
-
 
   // Navigation functions
   const navigateToNewAnalysis = () => {
@@ -212,25 +211,6 @@ export default function StrategicIntelligencePage() {
     return names[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'failed': return 'bg-red-100 text-red-800 border-red-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-3 w-3" />;
-      case 'in_progress': return <Clock className="h-3 w-3" />;
-      case 'failed': return <AlertCircle className="h-3 w-3" />;
-      default: return <Clock className="h-3 w-3" />;
-    }
-  };
-
   const calculateOverallMetrics = () => {
     if (!analyses || analyses.length === 0) {
       return {
@@ -258,13 +238,283 @@ export default function StrategicIntelligencePage() {
 
   const metrics = calculateOverallMetrics();
 
+  // Prepare stat cards data
+  const statCards = [
+    {
+      title: "Total Analyses",
+      value: metrics.totalAnalyses.toString(),
+      description: `${metrics.completedAnalyses} completed`,
+      icon: BarChart3,
+      trend: null,
+      trendUp: null,
+    },
+    {
+      title: "Completion Rate",
+      value: `${Math.round(metrics.completionRate)}%`,
+      description: "Analysis success rate",
+      icon: CheckCircle,
+      trend: null,
+      trendUp: null,
+    },
+    {
+      title: "Avg Confidence",
+      value: `${Math.round(metrics.avgConfidence)}%`,
+      description: "Analysis confidence",
+      icon: Target,
+      trend: null,
+      trendUp: null,
+    },
+    {
+      title: "Business Impact",
+      value: `${metrics.avgImpact.toFixed(1)}/10`,
+      description: "Average impact score",
+      icon: TrendingUp,
+      trend: null,
+      trendUp: null,
+    },
+  ];
+
+  const headerActions = [
+    {
+      label: "New Analysis",
+      variant: "outline" as const,
+      icon: Plus,
+      onClick: navigateToNewAnalysis,
+    },
+    {
+      label: "New Plan",
+      variant: "default" as const,
+      icon: Brain,
+      onClick: navigateToNewPlan,
+    },
+  ];
+
+  const tabs = [
+    {
+      value: "overview",
+      label: "Overview",
+      content: (
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {/* Recent Analyses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Recent Analyses
+              </CardTitle>
+              <CardDescription>
+                Latest strategic analyses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {analyses && analyses.length > 0 ? (
+                  analyses.slice(0, 3).map((analysis) => (
+                    <div key={analysis.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getAnalysisTypeIcon(analysis.analysisType)}
+                        <div>
+                          <p className="text-sm font-medium">{analysis.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {analysis.createdAt.toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <StatusBadge 
+                        status={
+                          analysis.status === 'completed' ? 'success' : 
+                          analysis.status === 'in_progress' ? 'warning' : 
+                          analysis.status === 'failed' ? 'error' : 'secondary'
+                        } 
+                        size="sm"
+                      >
+                        {analysis.status}
+                      </StatusBadge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No analyses available
+                  </div>
+                )}
+              </div>
+              <Button variant="outline" className="w-full mt-4" onClick={navigateToAnalytics}>
+                View All Analyses
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Strategic Plans */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                Strategic Plans
+              </CardTitle>
+              <CardDescription>
+                Active strategic initiatives
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {strategicPlans && strategicPlans.length > 0 ? (
+                  strategicPlans.slice(0, 3).map((plan) => (
+                    <div key={plan.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{plan.title}</p>
+                        <StatusBadge 
+                          status={plan.status === 'approved' ? 'success' : 'warning'} 
+                          size="sm"
+                        >
+                          {plan.status}
+                        </StatusBadge>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Progress</span>
+                          <span>{Math.round(plan.implementationProgress * 100)}%</span>
+                        </div>
+                        <Progress value={plan.implementationProgress * 100} className="h-2" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No strategic plans available
+                  </div>
+                )}
+              </div>
+              <Button variant="outline" className="w-full mt-4" onClick={navigateToNewPlan}>
+                Create New Plan
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Business Context */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Business Context
+              </CardTitle>
+              <CardDescription>
+                Current business environment
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {businessContexts && businessContexts.length > 0 ? (
+                  businessContexts.slice(0, 3).map((context) => (
+                    <div key={context.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{context.name}</p>
+                        <StatusBadge 
+                          status={context.confidenceLevel > 0.8 ? 'success' : 'warning'} 
+                          size="sm"
+                        >
+                          {Math.round(context.confidenceLevel * 100)}% Confidence
+                        </StatusBadge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {context.companyName} • {context.industry}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No business context available
+                  </div>
+                )}
+              </div>
+              <Button variant="outline" className="w-full mt-4" onClick={navigateToContext}>
+                Manage Context
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ),
+    },
+    {
+      value: "analyses",
+      label: "Business Analysis",
+      content: (
+        <Card>
+          <CardHeader>
+            <CardTitle>Business Analysis</CardTitle>
+            <CardDescription>Strategic analysis and insights</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Business Analysis</h3>
+              <p className="text-muted-foreground">
+                This section is currently under development.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      value: "planning",
+      label: "Strategic Planning",
+      content: (
+        <Card>
+          <CardHeader>
+            <CardTitle>Strategic Planning</CardTitle>
+            <CardDescription>Strategic planning and execution</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Strategic Planning</h3>
+              <p className="text-muted-foreground">
+                This section is currently under development.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      value: "context",
+      label: "Business Context",
+      content: (
+        <Card>
+          <CardHeader>
+            <CardTitle>Business Context</CardTitle>
+            <CardDescription>Business environment and context management</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Business Context</h3>
+              <p className="text-muted-foreground">
+                This section is currently under development.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ),
+    },
+  ];
+
   if (isLoading) {
     return (
-        <><PageHeader
-        items={[
-          { label: "Dashboard", href: "/dashboard/ceo" },
-          { label: "Strategic Intelligence", isCurrentPage: true }
-        ]} /><main className="flex-1 space-y-6 p-6">
+      <>
+        <PageHeaderWithActions
+          title="Strategic Intelligence"
+          description="AI-powered strategic analysis and planning"
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard/ceo" },
+            { label: "Strategic Intelligence", isCurrentPage: true }
+          ]}
+          actions={[]}
+        />
+        <main className="flex-1 space-y-6 p-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
               <Card key={i}>
@@ -275,470 +525,37 @@ export default function StrategicIntelligencePage() {
               </Card>
             ))}
           </div>
-        </main></>
+        </main>
+      </>
     );
   }
 
   return (
     <>
-      <PageHeader
-        items={[
+      <PageHeaderWithActions
+        title="Strategic Intelligence"
+        description="AI-powered strategic analysis and planning"
+        breadcrumbs={[
           { label: "Dashboard", href: "/dashboard/ceo" },
           { label: "Strategic Intelligence", isCurrentPage: true }
         ]}
+        actions={headerActions}
       />
 
       <main className="flex-1 space-y-4 sm:space-y-6 px-1 xs:px-2 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
         {/* Key Metrics */}
         <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Analyses</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.totalAnalyses}</div>
-              <p className="text-xs text-muted-foreground">
-                {metrics.completedAnalyses} completed
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round(metrics.completionRate)}%</div>
-              <p className="text-xs text-muted-foreground">
-                Analysis success rate
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Confidence</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round(metrics.avgConfidence)}%</div>
-              <p className="text-xs text-muted-foreground">
-                Analysis confidence
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Business Impact</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.avgImpact.toFixed(1)}/10</div>
-              <p className="text-xs text-muted-foreground">
-                Average impact score
-              </p>
-            </CardContent>
-          </Card>
+          {statCards.map((stat, index) => (
+            <StatCard key={index} {...stat} />
+          ))}
         </div>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-3 sm:space-y-4 md:space-y-6">
-          <TabsList className="flex w-full overflow-x-auto gap-2 sm:gap-0 grid grid-cols-2 sm:grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analyses">Business Analysis</TabsTrigger>
-            <TabsTrigger value="planning">Strategic Planning</TabsTrigger>
-            <TabsTrigger value="context">Business Context</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-3 sm:space-y-4 md:space-y-6">
-            <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {/* Recent Analyses */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Recent Analyses
-                  </CardTitle>
-                  <CardDescription>
-                    Latest strategic analyses
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {analyses && analyses.length > 0 ? (
-                      analyses.slice(0, 3).map((analysis) => (
-                        <div key={analysis.id} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {getAnalysisTypeIcon(analysis.analysisType)}
-                            <div>
-                              <p className="text-sm font-medium">{analysis.title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {analysis.createdAt.toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge className={getStatusColor(analysis.status)}>
-                            {analysis.status}
-                          </Badge>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        No analyses available
-                      </div>
-                    )}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4" onClick={navigateToAnalytics}>
-                    View All Analyses
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Strategic Plans */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5" />
-                    Strategic Plans
-                  </CardTitle>
-                  <CardDescription>
-                    Active strategic plans
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {strategicPlans && strategicPlans.length > 0 ? (
-                      strategicPlans.map((plan) => (
-                        <div key={plan.id} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">{plan.title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {plan.timeHorizonMonths} months timeline
-                              </p>
-                            </div>
-                            <Badge variant="secondary">{plan.status}</Badge>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span>Progress</span>
-                              <span>{Math.round(plan.implementationProgress * 100)}%</span>
-                            </div>
-                            <Progress value={plan.implementationProgress * 100} />
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        No strategic plans available
-                      </div>
-                    )}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4" onClick={navigateToNewPlan}>
-                    View All Plans
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    Quick Actions
-                  </CardTitle>
-                  <CardDescription>
-                    Start new strategic analysis or planning
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
-                    <Button 
-                      variant="outline" 
-                      className="h-14 sm:h-16 px-2 py-2 flex flex-col items-center justify-center text-center whitespace-normal break-words"
-                      onClick={navigateToNewAnalysis}
-                    >
-                      <Target className="h-5 w-5 mb-1" />
-                      <span className="text-[11px] sm:text-xs font-medium leading-tight">SWOT Analysis</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="h-14 sm:h-16 px-2 py-2 flex flex-col items-center justify-center text-center whitespace-normal break-words"
-                      onClick={navigateToNewAnalysis}
-                    >
-                      <Users className="h-5 w-5 mb-1" />
-                      <span className="text-[11px] sm:text-xs font-medium leading-tight">Competitive Analysis</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="h-14 sm:h-16 px-2 py-2 flex flex-col items-center justify-center text-center whitespace-normal break-words"
-                      onClick={navigateToNewAnalysis}
-                    >
-                      <TrendingUp className="h-5 w-5 mb-1" />
-                      <span className="text-[11px] sm:text-xs font-medium leading-tight">Market Analysis</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="h-14 sm:h-16 px-2 py-2 flex flex-col items-center justify-center text-center whitespace-normal break-words"
-                      onClick={navigateToNewPlan}
-                    >
-                      <Brain className="h-5 w-5 mb-1" />
-                      <span className="text-[11px] sm:text-xs font-medium leading-tight">Strategic Planning</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Business Analysis Tab */}
-          <TabsContent value="analyses" className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 md:gap-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Business Analysis</h2>
-              <div className="flex gap-2 mt-2 sm:mt-0">
-                <Button variant="outline">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-                <Button onClick={navigateToNewAnalysis}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Analysis
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1">
-              {analyses && analyses.length > 0 ? (
-                analyses.map((analysis) => (
-                  <Card key={analysis.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {getAnalysisTypeIcon(analysis.analysisType)}
-                          <div>
-                            <CardTitle>{analysis.title}</CardTitle>
-                            <CardDescription>
-                              {getAnalysisTypeName(analysis.analysisType)} • {analysis.createdAt.toLocaleDateString()}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <Badge className={getStatusColor(analysis.status)}>
-                          {getStatusIcon(analysis.status)}
-                          <span className="ml-1">{analysis.status}</span>
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-1 md:grid-cols-3">
-                        <div>
-                          <p className="text-sm font-medium">Confidence Score</p>
-                          <p className="text-2xl font-bold">
-                            {analysis.confidenceScore ? `${Math.round(analysis.confidenceScore * 100)}%` : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Business Impact</p>
-                          <p className="text-2xl font-bold">
-                            {analysis.businessImpact ? `${analysis.businessImpact}/10` : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Execution Time</p>
-                          <p className="text-2xl font-bold">
-                            {analysis.executionTimeSeconds ? `${Math.round(analysis.executionTimeSeconds)}s` : 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button variant="outline" size="sm" onClick={navigateToAnalytics}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Results
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Export
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={navigateToNewAnalysis}>
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Re-run
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground">No analyses found. Create your first analysis to get started.</p>
-                    <Button className="mt-4" onClick={navigateToNewAnalysis}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Analysis
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Strategic Planning Tab */}
-          <TabsContent value="planning" className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 md:gap-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Strategic Planning</h2>
-              <Button className="mt-2 sm:mt-0" onClick={navigateToNewPlan}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Strategic Plan
-              </Button>
-            </div>
-
-            <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1">
-              {strategicPlans && strategicPlans.length > 0 ? (
-                strategicPlans.map((plan) => (
-                  <Card key={plan.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>{plan.title}</CardTitle>
-                          <CardDescription>
-                            {plan.timeHorizonMonths} months • {plan.createdAt.toLocaleDateString()}
-                          </CardDescription>
-                        </div>
-                        <Badge variant="secondary">{plan.status}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
-                        <div>
-                          <p className="text-sm font-medium">Success Probability</p>
-                          <p className="text-2xl font-bold">{Math.round(plan.successProbability * 100)}%</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Implementation Progress</p>
-                          <p className="text-2xl font-bold">{Math.round(plan.implementationProgress * 100)}%</p>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span>Overall Progress</span>
-                          <span>{Math.round(plan.implementationProgress * 100)}%</span>
-                        </div>
-                        <Progress value={plan.implementationProgress * 100} />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={navigateToAnalytics}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Plan
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Export
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={navigateToNewPlan}>
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Update Plan
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground">No strategic plans found. Create your first plan to get started.</p>
-                    <Button className="mt-4" onClick={navigateToNewPlan}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Plan
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Business Context Tab */}
-          <TabsContent value="context" className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 md:gap-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Business Context</h2>
-              <Button className="mt-2 sm:mt-0" onClick={navigateToContext}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Context
-              </Button>
-            </div>
-
-            <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1">
-              {businessContexts && businessContexts.length > 0 ? (
-                businessContexts.map((context) => (
-                  <Card key={context.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>{context.name}</CardTitle>
-                          <CardDescription>
-                            {context.companyName} • {context.industry}
-                          </CardDescription>
-                        </div>
-                        <Badge variant="secondary">{context.businessStage}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-1 md:grid-cols-3">
-                        <div>
-                          <p className="text-sm font-medium">Company Size</p>
-                          <p className="text-lg font-semibold">{context.companySize}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Completeness</p>
-                          <p className="text-lg font-semibold">{Math.round(context.completenessScore * 100)}%</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Confidence</p>
-                          <p className="text-lg font-semibold">{Math.round(context.confidenceLevel * 100)}%</p>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span>Data Completeness</span>
-                          <span>{Math.round(context.completenessScore * 100)}%</span>
-                        </div>
-                        <Progress value={context.completenessScore * 100} />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={navigateToContext}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={navigateToContext}>
-                          <Settings className="h-4 w-4 mr-2" />
-                          Edit Context
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={navigateToNewAnalysis}>
-                          <Brain className="h-4 w-4 mr-2" />
-                          Run Analysis
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground">No business context found. Add context to improve analysis accuracy.</p>
-                    <Button className="mt-4" onClick={navigateToContext}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Context
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <TabbedContentLayout
+          value={selectedTab}
+          onValueChange={setSelectedTab}
+          tabs={tabs}
+          className="space-y-3 sm:space-y-4 md:space-y-6"
+        />
       </main>
     </>
   );

@@ -1,10 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Plus, TrendingUp, Users, MessageSquare, Calendar, Target, BarChart3 } from "lucide-react";
 import ContentGenerator from "@/components/social-media/content-generator";
 import SocialAccountsManager from "@/components/social-media/social-accounts-manager";
@@ -12,6 +9,9 @@ import SocialMediaOverview from "@/components/social-media/social-media-overview
 import SocialPostsManager from "@/components/social-media/social-posts-manager";
 import SocialCampaignsManager from "@/components/social-media/social-campaigns-manager";
 import SocialCalendar from "@/components/social-media/social-calendar";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { TabbedContentLayout } from "@/components/ui/tabbed-content-layout";
 
 export const metadata: Metadata = {
   title: "Social Media Management | Agent CEO",
@@ -19,37 +19,104 @@ export const metadata: Metadata = {
 };
 
 export default async function SocialMediaPage() {
+  const headerActions = [
+    {
+      label: "New Campaign",
+      variant: "outline" as const,
+      icon: Target,
+    },
+    {
+      label: "Create Post",
+      variant: "default" as const,
+      icon: Plus,
+    },
+  ];
+
+  const tabs = [
+    {
+      value: "overview",
+      label: "Overview",
+      icon: TrendingUp,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <SocialMediaOverview />
+        </Suspense>
+      ),
+    },
+    {
+      value: "accounts",
+      label: "Accounts",
+      icon: Users,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <SocialAccountsManager />
+        </Suspense>
+      ),
+    },
+    {
+      value: "posts",
+      label: "Posts",
+      icon: MessageSquare,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <SocialPostsManager />
+        </Suspense>
+      ),
+    },
+    {
+      value: "campaigns",
+      label: "Campaigns",
+      icon: Target,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <SocialCampaignsManager />
+        </Suspense>
+      ),
+    },
+    {
+      value: "calendar",
+      label: "Calendar",
+      icon: Calendar,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <SocialCalendar />
+        </Suspense>
+      ),
+    },
+    {
+      value: "generator",
+      label: "Generate",
+      icon: Plus,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <ContentGenerator />
+        </Suspense>
+      ),
+    },
+    {
+      value: "analytics",
+      label: "Analytics",
+      icon: BarChart3,
+      content: (
+        <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
+          <SocialAnalyticsDashboard />
+        </Suspense>
+      ),
+    },
+  ];
+
   return (
     <>
-      <PageHeader
-        items={[
+      <PageHeaderWithActions
+        title="Social Media Management"
+        description="Manage your social media presence across multiple platforms with AI-powered automation"
+        breadcrumbs={[
           { label: "CEO Dashboard", href: "/dashboard/ceo" },
           { label: "Social Media", isCurrentPage: true },
         ]}
+        actions={headerActions}
       />
       <main className="p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Social Media Management</h1>
-              <p className="text-muted-foreground">
-                Manage your social media presence across multiple platforms with AI-powered automation
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="gap-2">
-                <Target className="h-4 w-4" />
-                New Campaign
-              </Button>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Create Post
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Quick Stats */}
         <div className="mb-8">
           <Suspense fallback={<QuickStatsLoading />}>
@@ -58,80 +125,11 @@ export default async function SocialMediaPage() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 bg-background border">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="accounts" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Accounts</span>
-            </TabsTrigger>
-            <TabsTrigger value="posts" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Posts</span>
-            </TabsTrigger>
-            <TabsTrigger value="campaigns" className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              <span className="hidden sm:inline">Campaigns</span>
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendar</span>
-            </TabsTrigger>
-            <TabsTrigger value="generator" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Generate</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <SocialMediaOverview />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="accounts" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <SocialAccountsManager />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="posts" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <SocialPostsManager />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="campaigns" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <SocialCampaignsManager />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="calendar" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <SocialCalendar />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="generator" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <ContentGenerator />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <Suspense fallback={<div className="h-96 rounded-lg bg-muted animate-pulse" />}>
-              <SocialAnalyticsDashboard />
-            </Suspense>
-          </TabsContent>
-        </Tabs>
+        <TabbedContentLayout
+          defaultValue="overview"
+          tabs={tabs}
+          className="space-y-6"
+        />
       </main>
     </>
   );
@@ -202,24 +200,7 @@ async function QuickStats() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {statCards.map((stat, index) => (
-        <Card key={index} className="border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">{stat.title}</CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
-            <div className="mt-2">
-              <Badge 
-                variant={stat.trendUp ? "default" : "secondary"}
-                className="text-xs"
-              >
-                {stat.trend}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard key={index} {...stat} />
       ))}
     </div>
   );
