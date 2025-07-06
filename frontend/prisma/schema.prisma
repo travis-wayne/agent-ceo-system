@@ -39,6 +39,48 @@ model Workspace {
   businesses   Business[]
   applications JobApplication[]
   tickets      Ticket[]
+  agents       Agent[]
+  agentTasks   AgentTask[]
+
+  // Strategic Intelligence Relations
+  businessContexts BusinessContext[]
+  analysisRecords  AnalysisRecord[]
+  strategicPlans   StrategicPlanRecord[]
+  decisionAnalyses DecisionAnalysisRecord[]
+
+  // Email Automation Relations
+  emailCampaigns           EmailCampaign[]
+  emailAutomationTemplates EmailAutomationTemplate[]
+  contactLists             ContactList[]
+  emailContacts            EmailContact[]
+  contactSegments          ContactSegment[]
+
+  // Data Analysis Relations
+  dataUploadSessions       DataUploadSession[]
+  dataAnalysisRecords      DataAnalysisRecord[]
+  dataReports              DataReport[]
+  dataVisualizations       DataVisualization[]
+  dataProcessingJobs       DataProcessingJob[]
+
+  // Social Media Management Relations
+  socialMediaAccounts      SocialMediaAccount[]
+  socialMediaPosts         SocialMediaPost[]
+  contentTemplates         ContentTemplate[]
+  socialMediaCampaigns     SocialMediaCampaign[]
+  socialContentCalendars   SocialContentCalendar[]
+
+  // Workflow Automation Relations
+  workflows                Workflow[]
+  workflowExecutions       WorkflowExecution[]
+  workflowTriggers         WorkflowTrigger[]
+  workflowActions          WorkflowAction[]
+  workflowConditions       WorkflowCondition[]
+  workflowVariables        WorkflowVariable[]
+  workflowSteps            WorkflowStep[]
+  workflowTemplates        WorkflowTemplate[]
+  workflowIntegrations     WorkflowIntegration[]
+  workflowMonitoring       WorkflowMonitoring[]
+  workflowExecutionLogs    WorkflowExecutionLog[]
 
   @@map("workspaces")
 }
@@ -108,6 +150,7 @@ model Business {
   Ticket      Ticket[]
   emailSyncs  EmailSync[]
   smsMessages SmsMessage[]
+  agentTasks  AgentTask[]
 
   @@index([workspaceId])
   @@map("businesses")
@@ -163,6 +206,7 @@ model Contact {
   Ticket     Ticket[]
   emailSyncs EmailSync[]
   SmsMessage SmsMessage[]
+  agentTasks AgentTask[]
 
   @@map("contacts")
 }
@@ -402,6 +446,45 @@ model User {
   emailProvider EmailProvider?
   emailSyncs    EmailSync[]
 
+  // Strategic Intelligence Relations
+  analysisRecords  AnalysisRecord[]
+  strategicPlans   StrategicPlanRecord[]
+  decisionAnalyses DecisionAnalysisRecord[]
+
+  // Email Automation Relations
+  emailCampaigns           EmailCampaign[]
+  emailAutomationTemplates EmailAutomationTemplate[]
+  contactLists             ContactList[]
+  emailContacts            EmailContact[]
+  contactSegments          ContactSegment[]
+
+  // Data Analysis Relations
+  dataUploadSessions       DataUploadSession[]
+  dataAnalysisRecords      DataAnalysisRecord[]
+  dataReports              DataReport[]
+  dataVisualizations       DataVisualization[]
+  dataProcessingJobs       DataProcessingJob[]
+
+  // Social Media Management Relations
+  socialMediaAccounts      SocialMediaAccount[]
+  socialMediaPosts         SocialMediaPost[]
+  contentTemplates         ContentTemplate[]
+  socialMediaCampaigns     SocialMediaCampaign[]
+  socialContentCalendars   SocialContentCalendar[]
+
+  // Workflow Automation Relations
+  workflows                Workflow[]
+  workflowExecutions       WorkflowExecution[]
+  workflowTriggers         WorkflowTrigger[]
+  workflowActions          WorkflowAction[]
+  workflowConditions       WorkflowCondition[]
+  workflowVariables        WorkflowVariable[]
+  workflowSteps            WorkflowStep[]
+  workflowTemplates        WorkflowTemplate[]
+  workflowIntegrations     WorkflowIntegration[]
+  workflowMonitoring       WorkflowMonitoring[]
+  workflowExecutionLogs    WorkflowExecutionLog[]
+
   @@unique([email])
   @@index([workspaceId])
   @@map("user")
@@ -582,4 +665,3367 @@ enum MessageDirection {
   outbound
 
   @@map("message_direction")
+}
+
+// AI Agents - Represents different types of AI agents
+model Agent {
+  id             String      @id @default(cuid())
+  name           String
+  type           AgentType
+  specialization String
+  status         AgentStatus @default(active)
+
+  // Configuration
+  maxConcurrentTasks Int     @default(3)
+  model              String // AI model being used (e.g., "GPT-4", "Claude-3")
+  avatar             String? // Emoji or icon representation
+  tasksCompleted     Int     @default(0)
+  successRate        Float? // Success rate percentage
+  efficiency         Float? // Efficiency score
+
+  // Relations
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id])
+  tasks       AgentTask[]
+  executions  TaskExecution[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([type])
+  @@index([status])
+  @@map("agents")
+}
+
+enum AgentType {
+  ceo
+  sales
+  marketing
+  operations
+  analytics
+
+  @@map("agent_type")
+}
+
+enum AgentStatus {
+  active
+  busy
+  inactive
+  maintenance
+
+  @@map("agent_status")
+}
+
+// AI Agent Tasks - Work items for AI agents
+model AgentTask {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  type        TaskType
+  priority    TaskPriority @default(medium)
+  status      TaskStatus   @default(pending)
+
+  // Task data
+  input   Json? // Input parameters for the task
+  output  Json? // Task results/output
+  context Json? // Additional context data
+
+  // Scheduling
+  scheduledFor DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  dueDate      DateTime?
+
+  // Progress tracking
+  progress          Int  @default(0) // 0-100
+  estimatedDuration Int? // in minutes
+  actualDuration    Int? // in minutes
+
+  // Business metrics
+  businessImpact Float? // Business impact score (0-10)
+  complexity     String? // very_high, high, medium, low
+  category       String? // Strategic Analysis, Revenue Generation, etc.
+
+  // Budget and resources
+  budgetAllocated Float?
+  budgetSpent     Float?
+  resourcesUsed   Json? // CPU, memory, tokens, etc.
+
+  // Error handling
+  retryCount Int     @default(0)
+  maxRetries Int     @default(3)
+  lastError  String?
+
+  // Relations
+  agentId     String
+  agent       Agent     @relation(fields: [agentId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  // Optional relations to CRM entities
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+  contactId  String?
+  contact    Contact?  @relation(fields: [contactId], references: [id])
+
+  // Task execution history
+  executions TaskExecution[]
+
+  // Stakeholders and deliverables
+  stakeholders Json? // Array of stakeholder objects
+  deliverables Json? // Array of deliverable objects
+  milestones   Json? // Array of milestone objects
+  tags         String[] // Task tags
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([agentId])
+  @@index([status])
+  @@index([type])
+  @@index([priority])
+  @@index([scheduledFor])
+  @@map("agent_tasks")
+}
+
+enum TaskType {
+  strategic_analysis
+  market_research
+  lead_qualification
+  email_campaign
+  content_creation
+  data_analysis
+  customer_outreach
+  social_media_post
+  report_generation
+  competitive_analysis
+  workflow_automation
+  revenue_generation
+  marketing_initiatives
+  operational_excellence
+  business_intelligence
+
+  @@map("task_type")
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  urgent
+  critical
+
+  @@map("task_priority")
+}
+
+enum TaskStatus {
+  draft
+  pending
+  queued
+  in_progress
+  paused
+  completed
+  failed
+  cancelled
+  retrying
+
+  @@map("task_status")
+}
+
+// Task Execution History - Detailed execution logs
+model TaskExecution {
+  id String @id @default(cuid())
+
+  // Execution details
+  startedAt   DateTime        @default(now())
+  completedAt DateTime?
+  duration    Int? // in seconds
+  status      ExecutionStatus
+
+  // Execution data
+  inputData    Json?
+  outputData   Json?
+  errorMessage String?
+  stackTrace   String? @db.Text
+
+  // Performance metrics
+  tokensUsed         Int? // AI tokens consumed
+  cost               Float? // Execution cost
+  apiCalls           Int? // Number of API calls made
+  qualityScore       Float? // Quality score (0-10)
+  clientSatisfaction Float? // Client satisfaction (0-5)
+
+  // Relations
+  taskId  String
+  task    AgentTask @relation(fields: [taskId], references: [id])
+  agentId String
+  agent   Agent     @relation(fields: [agentId], references: [id])
+
+  @@index([taskId])
+  @@index([agentId])
+  @@index([startedAt])
+  @@map("task_executions")
+}
+
+enum ExecutionStatus {
+  running
+  completed
+  failed
+  timeout
+  cancelled
+
+  @@map("execution_status")
+}
+
+// Strategic Intelligence System Models
+
+// Business Context - Comprehensive business context for strategic analysis
+model BusinessContext {
+  id   String @id @default(cuid())
+  name String // Context name/identifier
+
+  // Company Profile
+  companyName   String
+  industry      String
+  sector        String?
+  companySize   CompanySize
+  businessStage BusinessStage
+  foundedYear   Int?
+  employeeCount Int?
+  annualRevenue Float?
+  marketCap     Float?
+
+  // Geographic presence
+  geographicPresence Json? // Array of geographic markets
+
+  // Business Model and Strategy
+  businessModel         Json // Business model canvas data
+  valueProposition      Json // Value proposition details
+  competitiveAdvantages Json // Array of competitive advantages
+
+  // Current Business State
+  currentObjectives Json // Array of strategic objectives
+  challenges        Json // Array of business challenges
+  opportunities     Json // Array of business opportunities
+
+  // Market Context
+  marketConditions      Json // Market condition data
+  competitiveLandscape  Json // Competitive landscape data
+  regulatoryEnvironment Json // Regulatory context
+
+  // Financial Context
+  financialProfile   Json // Financial performance data
+  performanceMetrics Json // KPIs and metrics
+  budgetConstraints  Json // Budget limitations
+
+  // Context Metadata
+  completenessScore Float? // How complete the context is (0-1)
+  confidenceLevel   Float? // Confidence in data accuracy (0-1)
+  lastUpdated       DateTime @default(now())
+  dataSource        String? // How context was gathered
+
+  // Relations
+  workspaceId      String
+  workspace        Workspace                @relation(fields: [workspaceId], references: [id])
+  analysisRecords  AnalysisRecord[]
+  strategicPlans   StrategicPlanRecord[]
+  decisionAnalyses DecisionAnalysisRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([industry])
+  @@index([companySize])
+  @@map("business_contexts")
+}
+
+enum CompanySize {
+  startup
+  small_business
+  medium_enterprise
+  large_enterprise
+  multinational
+
+  @@map("company_size")
+}
+
+enum BusinessStage {
+  ideation
+  startup
+  growth
+  maturity
+  transformation
+  decline
+
+  @@map("business_stage")
+}
+
+// Analysis Records - Store all types of business analysis results
+model AnalysisRecord {
+  id           String       @id @default(cuid())
+  title        String // Analysis title
+  description  String? // Analysis description
+  analysisType AnalysisType
+
+  // Request Data
+  requestData       Json // Original analysis request
+  businessContextId String?
+  businessContext   BusinessContext? @relation(fields: [businessContextId], references: [id])
+
+  // Analysis Results
+  resultData       Json // Complete analysis results
+  executiveSummary String? @db.Text
+  keyInsights      Json? // Array of key insights
+  recommendations  Json? // Array of recommendations
+  actionItems      Json? // Array of action items
+
+  // Analysis Metadata
+  status               AnalysisStatus @default(pending)
+  confidenceScore      Float? // Confidence in analysis (0-1)
+  complexityScore      Float? // Analysis complexity (0-1)
+  executionTimeSeconds Float?
+  modelUsed            String? // AI model used
+  promptTokens         Int?
+  completionTokens     Int?
+  cost                 Float? // Analysis cost
+
+  // Quality Metrics
+  qualityScore       Float? // Analysis quality (0-10)
+  relevanceScore     Float? // Relevance to business (0-10)
+  actionabilityScore Float? // How actionable the insights are (0-10)
+
+  // Business Impact
+  businessImpact           Float? // Expected business impact (0-10)
+  riskLevel                RiskLevel?
+  urgencyLevel             UrgencyLevel?
+  implementationDifficulty ImplementationDifficulty?
+
+  // User and Workspace
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  // Implementation Tracking
+  implementationStarted  Boolean @default(false)
+  implementationProgress Float? // 0-1
+  implementationNotes    String? @db.Text
+
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  implementedAt DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([analysisType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("analysis_records")
+}
+
+enum AnalysisType {
+  swot_analysis
+  competitive_analysis
+  market_analysis
+  financial_analysis
+  strategic_planning
+  decision_support
+  risk_assessment
+  scenario_planning
+  business_model_analysis
+  value_chain_analysis
+
+  @@map("analysis_type")
+}
+
+enum AnalysisStatus {
+  pending
+  in_progress
+  completed
+  failed
+  cancelled
+
+  @@map("analysis_status")
+}
+
+enum RiskLevel {
+  very_low
+  low
+  medium
+  high
+  very_high
+
+  @@map("risk_level")
+}
+
+enum UrgencyLevel {
+  low
+  medium
+  high
+  critical
+
+  @@map("urgency_level")
+}
+
+enum ImplementationDifficulty {
+  very_easy
+  easy
+  medium
+  hard
+  very_hard
+
+  @@map("implementation_difficulty")
+}
+
+// Strategic Plan Records - Store strategic planning results
+model StrategicPlanRecord {
+  id          String  @id @default(cuid())
+  title       String // Strategic plan title
+  description String? // Plan description
+
+  // Planning Request
+  planningRequest   Json // Original planning request
+  businessContextId String?
+  businessContext   BusinessContext? @relation(fields: [businessContextId], references: [id])
+
+  // Strategic Plan Data
+  planningResult        Json // Complete planning result
+  executiveSummary      String? @db.Text
+  strategicObjectives   Json // Array of strategic objectives
+  strategicOptions      Json // Array of strategic options
+  selectedStrategy      Json // Selected strategy details
+  implementationRoadmap Json // Implementation roadmap
+
+  // Plan Metadata
+  timeHorizonMonths  Int // Planning horizon in months
+  complexityScore    Float? // Plan complexity (0-1)
+  successProbability Float? // Success probability (0-1)
+  confidenceLevel    Float? // Confidence in plan (0-1)
+  status             PlanningStatus @default(draft)
+
+  // Resource Allocation
+  budgetRequired     Float? // Total budget required
+  resourceAllocation Json? // Resource allocation plan
+  keyMilestones      Json? // Array of key milestones
+
+  // Implementation Tracking
+  implementationStarted  Boolean @default(false)
+  implementationProgress Float? // 0-1
+  milestonesCompleted    Int?    @default(0)
+  totalMilestones        Int?
+  currentPhase           String? // Current implementation phase
+
+  // Performance Metrics
+  expectedRoi Float? // Expected ROI
+  actualRoi   Float? // Actual ROI (if implemented)
+  kpiTargets  Json? // KPI targets
+  kpiActuals  Json? // Actual KPI performance
+
+  // User and Workspace
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  // Review and Updates
+  lastReviewDate DateTime?
+  nextReviewDate DateTime?
+  reviewNotes    String?   @db.Text
+
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  implementationStartDate DateTime?
+  targetCompletionDate    DateTime?
+  actualCompletionDate    DateTime?
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("strategic_plan_records")
+}
+
+enum PlanningStatus {
+  draft
+  under_review
+  approved
+  in_progress
+  completed
+  cancelled
+  on_hold
+
+  @@map("planning_status")
+}
+
+// Decision Analysis Records - Store decision support analysis results
+model DecisionAnalysisRecord {
+  id               String  @id @default(cuid())
+  title            String // Decision title
+  description      String? // Decision description
+  decisionScenario String? @db.Text
+
+  // Decision Request
+  decisionRequest   Json // Original decision request
+  businessContextId String?
+  businessContext   BusinessContext? @relation(fields: [businessContextId], references: [id])
+
+  // Decision Analysis Data
+  decisionResult     Json // Complete decision analysis
+  executiveSummary   String? @db.Text
+  decisionOptions    Json // Array of decision options
+  evaluationCriteria Json // Evaluation criteria used
+  riskAssessment     Json // Risk assessment for each option
+
+  // Decision Recommendation
+  recommendedOption      Json? // Recommended decision option
+  recommendationStrength Float? // Strength of recommendation (0-1)
+  confidenceLevel        Float? // Confidence in recommendation (0-1)
+  overallRiskLevel       RiskLevel?
+
+  // Decision Metadata
+  numberOfOptions      Int? // Number of options evaluated
+  decisionComplexity   Float? // Decision complexity (0-1)
+  stakeholdersImpacted Json? // Array of stakeholders
+  status               DecisionStatus @default(pending)
+
+  // Implementation Tracking
+  decisionMade          Boolean @default(false)
+  selectedOption        Json? // Actually selected option
+  decisionRationale     String? @db.Text
+  implementationOutcome Json? // Implementation results
+
+  // Timeline
+  decisionDeadline DateTime?
+  decisionMadeAt   DateTime?
+  implementedAt    DateTime?
+
+  // User and Workspace
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([status])
+  @@index([decisionDeadline])
+  @@index([createdAt])
+  @@map("decision_analysis_records")
+}
+
+enum DecisionStatus {
+  pending
+  under_analysis
+  analysis_complete
+  decision_made
+  implemented
+  cancelled
+
+  @@map("decision_status")
+}
+
+// Email Automation System Models
+model EmailCampaign {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+
+  // Basic Campaign Settings
+  name        String
+  description String?
+  type        EmailCampaignType
+  status      EmailCampaignStatus   @default(DRAFT)
+  priority    EmailCampaignPriority @default(MEDIUM)
+  tags        String[]         @default([])
+
+  // Email Content
+  subject   String
+  preheader String?
+  fromName  String
+  fromEmail String
+  replyTo   String?
+
+  // Template and Content
+  templateId    String?
+  htmlContent   String?
+  textContent   String?
+  customContent Json?
+
+  // Personalization and Dynamic Content
+  personalizationRules Json?
+  dynamicContentRules  Json?
+  conditionalRules     Json?
+
+  // Targeting and Segmentation
+  targetLists       String[] @default([])
+  segmentationRules Json?
+  excludeLists      String[] @default([])
+  suppressionLists  String[] @default([])
+
+  // Scheduling and Delivery
+  schedulingType SchedulingType @default(IMMEDIATE)
+  scheduledTime  DateTime?
+  timezone       String         @default("UTC")
+  deliverySpeed  DeliverySpeed  @default(NORMAL)
+  sendingMethod  SendingMethod  @default(STANDARD)
+
+  // A/B Testing
+  isAbTest         Boolean @default(false)
+  abTestConfig     Json?
+  parentCampaignId String?
+
+  // Tracking and Analytics
+  trackingConfig     Json?
+  performanceMetrics Json?
+
+  // Campaign Results
+  totalSent         Int @default(0)
+  totalDelivered    Int @default(0)
+  totalOpened       Int @default(0)
+  totalClicked      Int @default(0)
+  totalBounced      Int @default(0)
+  totalUnsubscribed Int @default(0)
+  totalSpam         Int @default(0)
+
+  // Rates
+  deliveryRate    Float @default(0)
+  openRate        Float @default(0)
+  clickRate       Float @default(0)
+  bounceRate      Float @default(0)
+  unsubscribeRate Float @default(0)
+  spamRate        Float @default(0)
+
+  // Campaign Lifecycle
+  startedAt   DateTime?
+  completedAt DateTime?
+  pausedAt    DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  template  EmailAutomationTemplate? @relation(fields: [templateId], references: [id])
+
+  // Campaign Relations
+  emailDeliveries   EmailDelivery[]
+  campaignAnalytics EmailCampaignAnalytics[]
+  abTestResults     ABTestResult[]
+
+  @@map("email_campaigns")
+}
+
+model EmailAutomationTemplate {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+
+  // Basic Template Info
+  name        String
+  description String?
+  type        AutomationTemplateType
+  category    EmailTemplateCategory
+  status      AutomationTemplateStatus @default(ACTIVE)
+  tags        String[]                 @default([])
+
+  // Template Content
+  htmlContent String
+  textContent String?
+  cssStyles   String?
+
+  // Template Structure
+  variables Json? // Personalization variables
+  blocks    Json? // Dynamic content blocks
+  assets    Json? // Images, attachments, etc.
+
+  // Template Configuration
+  isResponsive       Boolean @default(true)
+  emailClientSupport Json? // Email client compatibility
+  optimizationScore  Float   @default(0)
+
+  // Template Versioning
+  version          String  @default("1.0")
+  parentTemplateId String?
+  isPublic         Boolean @default(false)
+
+  // Usage Statistics
+  usageCount       Int       @default(0)
+  averageOpenRate  Float     @default(0)
+  averageClickRate Float     @default(0)
+  lastUsed         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Template Relations
+  campaigns         EmailCampaign[]
+  templateAnalytics TemplateAnalytics[]
+
+  @@map("email_automation_templates")
+}
+
+model ContactList {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+
+  // List Information
+  name        String
+  description String?
+  type        ListType
+  source      ListSource
+  status      ListStatus @default(ACTIVE)
+  tags        String[]   @default([])
+
+  // List Configuration
+  customFields       Json?
+  complianceSettings Json?
+  accessSettings     Json?
+
+  // List Statistics
+  contactCount       Int @default(0)
+  activeContactCount Int @default(0)
+  subscribedCount    Int @default(0)
+  unsubscribedCount  Int @default(0)
+  bouncedCount       Int @default(0)
+
+  // List Health Metrics
+  healthScore     Float     @default(0)
+  engagementScore Float     @default(0)
+  lastCleanedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // List Relations
+  contacts      ContactListMember[]
+  segments      ContactSegment[]
+  listAnalytics ListAnalytics[]
+
+  @@map("contact_lists")
+}
+
+model EmailContact {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+
+  // Basic Contact Information
+  email     String
+  firstName String?
+  lastName  String?
+  fullName  String?
+  phone     String?
+  company   String?
+  jobTitle  String?
+
+  // Contact Metadata
+  source             EmailContactSource
+  status             EmailContactStatus @default(ACTIVE)
+  subscriptionStatus SubscriptionStatus @default(SUBSCRIBED)
+
+  // Custom Fields
+  customFields Json?
+
+  // Contact Preferences
+  emailPreferences  Json?
+  communicationFreq String?
+  preferredLanguage String?
+  timezone          String?
+
+  // Engagement Data
+  totalOpens      Int       @default(0)
+  totalClicks     Int       @default(0)
+  lastOpenedAt    DateTime?
+  lastClickedAt   DateTime?
+  lastEmailSentAt DateTime?
+
+  // Behavioral Data
+  engagementScore    Float    @default(0)
+  predictiveScores   Json?
+  behavioralSegments String[] @default([])
+
+  // Compliance
+  doubleOptIn Boolean   @default(false)
+  optInDate   DateTime?
+  optOutDate  DateTime?
+  gdprConsent Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Contact Relations
+  listMemberships    ContactListMember[]
+  segmentMemberships ContactSegmentMember[]
+  emailDeliveries    EmailDelivery[]
+  emailEvents        EmailEvent[]
+
+  @@unique([email, workspaceId])
+  @@map("email_contacts")
+}
+
+model ContactListMember {
+  id        String @id @default(cuid())
+  contactId String
+  listId    String
+
+  // Membership Status
+  status             MembershipStatus   @default(ACTIVE)
+  subscriptionStatus SubscriptionStatus @default(SUBSCRIBED)
+
+  // Membership Metadata
+  addedAt      DateTime @default(now())
+  addedBy      String?
+  source       String?
+  customFields Json?
+
+  // Engagement within list
+  listEngagementScore Float @default(0)
+
+  // Relations
+  contact EmailContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  list    ContactList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, listId])
+  @@map("contact_list_members")
+}
+
+model ContactSegment {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+
+  // Segment Information
+  name        String
+  description String?
+  type        SegmentType
+  status      SegmentStatus @default(ACTIVE)
+
+  // Segment Configuration
+  criteria         Json
+  sourceListIds    String[] @default([])
+  isDynamic        Boolean  @default(true)
+  refreshFrequency String? // hourly, daily, weekly, monthly
+
+  // ML Enhancements
+  mlEnhanced Boolean @default(false)
+  mlConfig   Json?
+
+  // Segment Statistics
+  contactCount    Int       @default(0)
+  lastRefreshedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Segment Relations
+  members          ContactSegmentMember[]
+  sourceLists      ContactList[]
+  segmentAnalytics SegmentAnalytics[]
+
+  @@map("contact_segments")
+}
+
+model ContactSegmentMember {
+  id        String @id @default(cuid())
+  contactId String
+  segmentId String
+
+  // Membership Status
+  status     MembershipStatus @default(ACTIVE)
+  confidence Float            @default(1.0)
+
+  // ML Enhancement Data
+  clusterInfo Json?
+  scores      Json?
+
+  addedAt DateTime @default(now())
+
+  // Relations
+  contact EmailContact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  segment ContactSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, segmentId])
+  @@map("contact_segment_members")
+}
+
+model EmailDelivery {
+  id         String @id @default(cuid())
+  campaignId String
+  contactId  String
+
+  // Delivery Information
+  messageId String?
+  status    DeliveryStatus
+
+  // Email Content at delivery
+  subject             String
+  htmlContent         String?
+  textContent         String?
+  personalizedContent Json?
+
+  // Delivery Metadata
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  openedAt     DateTime?
+  firstClickAt DateTime?
+
+  // Delivery Results
+  bounceType     BounceType?
+  bounceReason   String?
+  unsubscribedAt DateTime?
+  spamAt         DateTime?
+
+  // Tracking Data
+  opens        Int   @default(0)
+  clicks       Int   @default(0)
+  trackingData Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campaign EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  EmailContact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  // Delivery Relations
+  events EmailEvent[]
+
+  @@map("email_deliveries")
+}
+
+model EmailEvent {
+  id         String @id @default(cuid())
+  deliveryId String
+  contactId  String
+
+  // Event Information
+  eventType EmailEventType
+  eventData Json?
+
+  // Event Metadata
+  timestamp DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+  location  Json?
+
+  // Event Context
+  linkUrl  String?
+  linkText String?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  delivery EmailDelivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  contact  EmailContact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("email_events")
+}
+
+model ABTestResult {
+  id         String @id @default(cuid())
+  campaignId String
+
+  // Test Configuration
+  testName String
+  testType ABTestType
+  variants Json
+
+  // Test Results
+  variantResults          Json
+  winningVariant          String?
+  confidenceLevel         Float?
+  statisticalSignificance Boolean @default(false)
+
+  // Test Metadata
+  testStartedAt DateTime
+  testEndedAt   DateTime?
+  sampleSize    Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campaign EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("ab_test_results")
+}
+
+// Analytics Models for Email Automation
+model EmailCampaignAnalytics {
+  id         String @id @default(cuid())
+  campaignId String
+
+  // Time Period
+  date DateTime
+  hour Int?
+
+  // Performance Metrics
+  sent         Int @default(0)
+  delivered    Int @default(0)
+  opened       Int @default(0)
+  clicked      Int @default(0)
+  bounced      Int @default(0)
+  unsubscribed Int @default(0)
+  spam         Int @default(0)
+
+  // Calculated Rates
+  deliveryRate    Float @default(0)
+  openRate        Float @default(0)
+  clickRate       Float @default(0)
+  bounceRate      Float @default(0)
+  unsubscribeRate Float @default(0)
+  spamRate        Float @default(0)
+
+  // Revenue Metrics
+  revenue        Float @default(0)
+  conversions    Int   @default(0)
+  conversionRate Float @default(0)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  campaign EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date, hour])
+  @@map("email_campaign_analytics")
+}
+
+model TemplateAnalytics {
+  id         String @id @default(cuid())
+  templateId String
+
+  // Time Period
+  date DateTime
+
+  // Usage Metrics
+  campaignsUsed Int @default(0)
+  emailsSent    Int @default(0)
+
+  // Performance Metrics
+  avgOpenRate   Float @default(0)
+  avgClickRate  Float @default(0)
+  avgBounceRate Float @default(0)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  template EmailAutomationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, date])
+  @@map("template_analytics")
+}
+
+model ListAnalytics {
+  id     String @id @default(cuid())
+  listId String
+
+  // Time Period
+  date DateTime
+
+  // List Growth Metrics
+  newContacts     Int @default(0)
+  removedContacts Int @default(0)
+  totalContacts   Int @default(0)
+
+  // Engagement Metrics
+  avgEngagementScore Float @default(0)
+  activeContacts     Int   @default(0)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  list ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, date])
+  @@map("list_analytics")
+}
+
+model SegmentAnalytics {
+  id        String @id @default(cuid())
+  segmentId String
+
+  // Time Period
+  date DateTime
+
+  // Segment Metrics
+  contactCount       Int   @default(0)
+  growthRate         Float @default(0)
+  avgEngagementScore Float @default(0)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  segment ContactSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@unique([segmentId, date])
+  @@map("segment_analytics")
+}
+
+// Email Automation Enums
+enum EmailCampaignType {
+  NEWSLETTER
+  PROMOTIONAL
+  TRANSACTIONAL
+  WELCOME_SERIES
+  LEAD_NURTURING
+  RE_ENGAGEMENT
+  PRODUCT_ANNOUNCEMENT
+  EVENT_INVITATION
+  DRIP_CAMPAIGN
+  BEHAVIORAL_TRIGGER
+}
+
+enum EmailCampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  CANCELLED
+  COMPLETED
+  FAILED
+}
+
+enum EmailCampaignPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SchedulingType {
+  IMMEDIATE
+  SCHEDULED
+  RECURRING
+  TRIGGERED
+  OPTIMAL_TIME
+}
+
+enum DeliverySpeed {
+  SLOW
+  NORMAL
+  FAST
+  BURST
+}
+
+enum SendingMethod {
+  STANDARD
+  DEDICATED_IP
+  SHARED_POOL
+  CUSTOM_SMTP
+}
+
+enum AutomationTemplateType {
+  NEWSLETTER
+  PROMOTIONAL
+  TRANSACTIONAL
+  WELCOME
+  ABANDONED_CART
+  PRODUCT_UPDATE
+  EVENT_INVITATION
+  SURVEY
+  CUSTOM
+}
+
+enum EmailTemplateCategory {
+  MARKETING
+  SALES
+  SUPPORT
+  PRODUCT
+  ANNOUNCEMENT
+  SEASONAL
+  LIFECYCLE
+  BEHAVIORAL
+}
+
+enum AutomationTemplateStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+  DRAFT
+}
+
+enum ListType {
+  MARKETING
+  TRANSACTIONAL
+  INTERNAL
+  IMPORT
+  SEGMENT
+  CUSTOM
+}
+
+enum ListSource {
+  MANUAL_IMPORT
+  API_IMPORT
+  WEB_FORM
+  INTEGRATION
+  SEGMENT
+  PURCHASE
+  EVENT
+  REFERRAL
+}
+
+enum ListStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+  CLEANING
+}
+
+enum EmailContactSource {
+  MANUAL_ENTRY
+  IMPORT
+  WEB_FORM
+  API
+  INTEGRATION
+  REFERRAL
+  PURCHASE
+  EVENT_SIGNUP
+  NEWSLETTER_SIGNUP
+}
+
+enum EmailContactStatus {
+  ACTIVE
+  INACTIVE
+  BOUNCED
+  UNSUBSCRIBED
+  BLOCKED
+  PENDING
+}
+
+enum SubscriptionStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+  PENDING
+  BOUNCED
+  SUPPRESSED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+  REMOVED
+  PENDING
+}
+
+enum SegmentType {
+  STATIC
+  DYNAMIC
+  BEHAVIORAL
+  DEMOGRAPHIC
+  ENGAGEMENT
+  PREDICTIVE
+  CUSTOM
+}
+
+enum SegmentStatus {
+  ACTIVE
+  INACTIVE
+  BUILDING
+  ERROR
+}
+
+enum DeliveryStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  FAILED
+  CANCELLED
+}
+
+enum BounceType {
+  SOFT
+  HARD
+  SUPPRESSED
+  TECHNICAL
+  POLICY
+}
+
+enum EmailEventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  UNSUBSCRIBED
+  SPAM_REPORT
+  FORWARD
+  REPLY
+}
+
+enum ABTestType {
+  SUBJECT_LINE
+  FROM_NAME
+  CONTENT
+  SEND_TIME
+  FREQUENCY
+  TEMPLATE
+  CTA
+  PERSONALIZATION
+}
+
+// =============================================================================
+// DATA ANALYSIS SYSTEM MODELS
+// =============================================================================
+
+// Data Upload Sessions - Track file upload and processing
+model DataUploadSession {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+
+  // File Information
+  fileName     String
+  originalName String
+  fileType     FileType
+  fileSize     Int
+  filePath     String?
+
+  // Upload Configuration
+  processingOptions Json? // Processing configuration
+  analysisSettings  Json? // Analysis preferences
+  validationRules   Json? // Custom validation rules
+
+  // Processing Status
+  status          UploadStatus    @default(UPLOADING)
+  processingStage ProcessingStage @default(VALIDATION)
+  progress        Float           @default(0)
+
+  // Results
+  dataPreview      Json? // Sample data preview
+  schemaInference  Json? // Inferred data schema
+  qualityMetrics   Json? // Data quality assessment
+  validationResult Json? // Validation results
+  errorLog         Json? // Processing errors
+
+  // Metadata
+  uploadStarted       DateTime  @default(now())
+  processingStarted   DateTime?
+  processingCompleted DateTime?
+
+  // Relations
+  user            User                 @relation(fields: [userId], references: [id])
+  workspace       Workspace            @relation(fields: [workspaceId], references: [id])
+  analysisRecords DataAnalysisRecord[]
+  processingJobs  DataProcessingJob[]
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([status])
+  @@map("data_upload_sessions")
+}
+
+// Data Analysis Records - Store complete analysis results
+model DataAnalysisRecord {
+  id              String  @id @default(cuid())
+  userId          String
+  workspaceId     String
+  uploadSessionId String?
+
+  // Analysis Configuration
+  title          String
+  description    String?
+  analysisType   DataAnalysisType
+  dataSourceType DataSourceType
+
+  // Request Data
+  analysisRequest  Json // Original analysis configuration
+  processingConfig Json? // Data processing configuration
+
+  // Analysis Results  
+  analysisResults  Json // Complete analysis results
+  executiveSummary String? @db.Text
+  keyInsights      Json? // AI-generated insights
+  recommendations  Json? // Actionable recommendations
+
+  // Statistical Results
+  descriptiveStats    Json? // Descriptive statistics
+  trendAnalysis       Json? // Trend analysis results
+  predictiveInsights  Json? // Predictive analysis
+  anomalyDetection    Json? // Anomaly detection results
+  correlationAnalysis Json? // Correlation analysis
+
+  // Visualization Data
+  chartConfigurations Json? // Chart setup data
+  dashboardLayout     Json? // Dashboard configuration
+  visualizationData   Json? // Generated visualization data
+
+  // AI Analysis Metadata
+  aiModel          String? // AI model used for insights
+  confidenceScore  Float? // Analysis confidence (0-1)
+  processingTime   Float? // Processing time in seconds
+  dataQualityScore Float? // Data quality assessment (0-1)
+  insightQuality   Float? // AI insight quality (0-1)
+
+  // Business Impact
+  businessImpact     Float? // Expected business impact (0-10)
+  actionabilityScore Float? // How actionable insights are (0-10)
+  strategicValue     Float? // Strategic value assessment (0-10)
+
+  // Status and Metadata
+  status   AnalysisStatus   @default(pending)
+  priority AnalysisPriority @default(MEDIUM)
+  tags     String[]         @default([])
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  analyzedAt DateTime?
+
+  // Relations
+  user           User                @relation(fields: [userId], references: [id])
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id])
+  uploadSession  DataUploadSession?  @relation(fields: [uploadSessionId], references: [id])
+  reports        DataReport[]
+  visualizations DataVisualization[]
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([analysisType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("data_analysis_records")
+}
+
+// Data Reports - Generated reports from analysis
+model DataReport {
+  id               String @id @default(cuid())
+  analysisRecordId String
+  userId           String
+  workspaceId      String
+
+  // Report Configuration
+  title       String
+  description String?
+  reportType  ReportType
+  format      ReportFormat
+
+  // Report Content
+  content          Json // Report content structure
+  executiveSummary String? @db.Text
+  sections         Json? // Report sections
+  appendices       Json? // Additional data/charts
+
+  // Generation Settings
+  generationConfig   Json? // Report generation settings
+  includeCharts      Boolean @default(true)
+  includeRawData     Boolean @default(false)
+  includeMethodology Boolean @default(true)
+
+  // Metadata
+  generatedAt   DateTime @default(now())
+  fileSize      Int? // Generated file size
+  filePath      String? // Stored report file path
+  downloadCount Int      @default(0)
+
+  // Relations
+  analysisRecord DataAnalysisRecord @relation(fields: [analysisRecordId], references: [id])
+  user           User               @relation(fields: [userId], references: [id])
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id])
+
+  @@index([analysisRecordId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("data_reports")
+}
+
+// Data Visualizations - Chart and dashboard configurations
+model DataVisualization {
+  id               String @id @default(cuid())
+  analysisRecordId String
+  userId           String
+  workspaceId      String
+
+  // Visualization Configuration
+  title       String
+  description String?
+  chartType   ChartType
+  dataConfig  Json // Data binding configuration
+  styleConfig Json? // Styling and formatting
+
+  // Chart Data
+  chartData           Json // Processed chart data
+  chartOptions        Json? // Chart-specific options
+  interactivityConfig Json? // Interactive features
+
+  // Layout Information
+  position   Json? // Position in dashboard
+  dimensions Json? // Width/height settings
+  responsive Boolean @default(true)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  viewCount Int      @default(0)
+
+  // Relations
+  analysisRecord DataAnalysisRecord @relation(fields: [analysisRecordId], references: [id])
+  user           User               @relation(fields: [userId], references: [id])
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id])
+
+  @@index([analysisRecordId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("data_visualizations")
+}
+
+// Data Processing Jobs - Track background processing tasks
+model DataProcessingJob {
+  id              String  @id @default(cuid())
+  userId          String
+  workspaceId     String
+  uploadSessionId String?
+
+  // Job Configuration
+  jobType       ProcessingJobType
+  jobName       String
+  configuration Json // Job-specific configuration
+
+  // Processing Status
+  status       ProcessingJobStatus @default(QUEUED)
+  priority     JobPriority         @default(NORMAL)
+  progress     Float               @default(0)
+  currentStage String?
+
+  // Results and Logs
+  result       Json? // Job execution result
+  errorMessage String? @db.Text
+  logs         Json? // Processing logs
+  metrics      Json? // Performance metrics
+
+  // Timing
+  queuedAt          DateTime  @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+  estimatedDuration Float? // Estimated duration in seconds
+  actualDuration    Float? // Actual duration in seconds
+
+  // Relations
+  user          User               @relation(fields: [userId], references: [id])
+  workspace     Workspace          @relation(fields: [workspaceId], references: [id])
+  uploadSession DataUploadSession? @relation(fields: [uploadSessionId], references: [id])
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([queuedAt])
+  @@map("data_processing_jobs")
+}
+
+// Enums for Data Analysis System
+enum FileType {
+  CSV
+  EXCEL
+  JSON
+  PDF
+  XML
+  PARQUET
+  TSV
+  TXT
+
+  @@map("file_type")
+}
+
+enum UploadStatus {
+  UPLOADING
+  UPLOADED
+  VALIDATING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+
+  @@map("upload_status")
+}
+
+enum ProcessingStage {
+  VALIDATION
+  CLEANING
+  TRANSFORMATION
+  ANALYSIS
+  INSIGHTS_GENERATION
+  VISUALIZATION
+  REPORTING
+  COMPLETED
+
+  @@map("processing_stage")
+}
+
+enum DataAnalysisType {
+  DESCRIPTIVE
+  TREND
+  PREDICTIVE
+  COMPREHENSIVE
+  COMPARATIVE
+  COHORT
+  SENTIMENT
+  ANOMALY_DETECTION
+  STATISTICAL
+  BUSINESS_INTELLIGENCE
+  CUSTOMER_SEGMENTATION
+  FINANCIAL
+  CORRELATION
+
+  @@map("data_analysis_type")
+}
+
+enum DataSourceType {
+  FILE_UPLOAD
+  DATABASE
+  API
+  STREAMING
+  MANUAL_ENTRY
+  INTEGRATION
+
+  @@map("data_source_type")
+}
+
+enum AnalysisPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+
+  @@map("analysis_priority")
+}
+
+enum ReportType {
+  EXECUTIVE_SUMMARY
+  DETAILED_ANALYSIS
+  STATISTICAL_REPORT
+  TREND_ANALYSIS
+  PREDICTIVE_INSIGHTS
+  DASHBOARD_EXPORT
+  CUSTOM
+
+  @@map("report_type")
+}
+
+enum ReportFormat {
+  PDF
+  HTML
+  EXCEL
+  POWERPOINT
+  JSON
+  CSV
+
+  @@map("report_format")
+}
+
+enum ChartType {
+  BAR
+  LINE
+  PIE
+  SCATTER
+  HISTOGRAM
+  BOX_PLOT
+  HEAT_MAP
+  AREA
+  DONUT
+  BUBBLE
+  SANKEY
+  TREE_MAP
+  RADAR
+  FUNNEL
+  WATERFALL
+
+  @@map("chart_type")
+}
+
+enum ProcessingJobType {
+  DATA_VALIDATION
+  DATA_CLEANING
+  STATISTICAL_ANALYSIS
+  TREND_ANALYSIS
+  PREDICTIVE_MODELING
+  AI_INSIGHTS_GENERATION
+  VISUALIZATION_CREATION
+  REPORT_GENERATION
+
+  @@map("processing_job_type")
+}
+
+enum ProcessingJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  RETRYING
+
+  @@map("processing_job_status")
+}
+
+enum JobPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+
+  @@map("job_priority")
+}
+
+// =============================================================================
+// SOCIAL MEDIA MANAGEMENT SYSTEM MODELS
+// =============================================================================
+
+// Social Media Accounts - Connected social media platform accounts
+model SocialMediaAccount {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String
+  
+  // Platform Information
+  platform        SocialPlatform
+  accountType     SocialAccountType
+  platformAccountId String          // Account ID from the platform
+  username        String
+  displayName     String
+  profileImageUrl String?
+  
+  // Account Metrics
+  followerCount   Int?              @default(0)
+  followingCount  Int?              @default(0)
+  postCount       Int?              @default(0)
+  
+  // Authentication
+  accessToken     String            @db.Text
+  refreshToken    String?           @db.Text
+  tokenExpiresAt  DateTime?
+  scopes          String[]          @default([])
+  
+  // Account Configuration
+  isActive        Boolean           @default(true)
+  publishingEnabled Boolean         @default(true)
+  analyticsEnabled Boolean          @default(true)
+  autoOptimizationEnabled Boolean  @default(false)
+  
+  // Platform Settings
+  platformSettings Json?            // Platform-specific configuration
+  postingPreferences Json?          // Posting preferences and constraints
+  
+  // Connection Status
+  connectionStatus ConnectionStatus @default(CONNECTED)
+  lastSyncAt      DateTime?
+  syncFrequency   String?           @default("hourly")
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  posts           SocialMediaPost[] @relation("SocialMediaAccountPosts")
+  campaigns       SocialMediaCampaign[]
+  analytics       SocialMediaAnalytics[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@unique([platformAccountId, platform])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([platform])
+  @@index([connectionStatus])
+  @@map("social_media_accounts")
+}
+
+// Social Media Posts - Individual posts across platforms
+model SocialMediaPost {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String
+  campaignId      String?
+  
+  // Content
+  title           String?
+  content         String            @db.Text
+  hashtags        String[]          @default([])
+  mentions        String[]          @default([])
+  
+  // Media Attachments
+  mediaAttachments Json?            // Array of media objects
+  
+  // Platform Variations
+  platformContent Json?             // Platform-specific content variations
+  
+  // Scheduling and Publishing
+  status          PostStatus        @default(DRAFT)
+  publishingType  PublishingType    @default(IMMEDIATE)
+  scheduledFor    DateTime?
+  publishedAt     DateTime?
+  
+  // Target Accounts
+  targetAccounts  String[]          @default([]) // Array of account IDs
+  publishingResults Json?           // Results per platform
+  
+  // AI Generation Metadata
+  isAIGenerated   Boolean           @default(false)
+  aiModel         String?
+  generationPrompt String?          @db.Text
+  aiConfidenceScore Float?
+  
+  // Optimization and Testing
+  optimizationRules Json?           // Applied optimization rules
+  isAbTest        Boolean           @default(false)
+  abTestConfig    Json?             // A/B test configuration
+  
+  // Performance Tracking
+  performanceMetrics Json?          // Aggregated performance metrics
+  engagementScore Float?            @default(0)
+  reachEstimate   Int?              @default(0)
+  
+  // Content Categorization
+  contentType     ContentType       @default(TEXT)
+  industry        String?
+  tags            String[]          @default([])
+  priority        PostPriority      @default(MEDIUM)
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  campaign        SocialMediaCampaign? @relation(fields: [campaignId], references: [id])
+  analytics       PostAnalytics[]
+  accounts        SocialMediaAccount[] @relation("SocialMediaAccountPosts")
+  calendarEvents  CalendarEvent[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([publishedAt])
+  @@map("social_media_posts")
+}
+
+// Social Media Campaigns - Organized campaign management
+model SocialMediaCampaign {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String
+  
+  // Campaign Information
+  name            String
+  description     String?           @db.Text
+  campaignType    SocialCampaignType      @default(GENERAL)
+  status          SocialCampaignStatus    @default(DRAFT)
+  
+  // Campaign Configuration
+  targetPlatforms SocialPlatform[]  @default([])
+  targetAccounts  String[]          @default([]) // Array of account IDs
+  
+  // Campaign Timeline
+  startDate       DateTime?
+  endDate         DateTime?
+  timezone        String            @default("UTC")
+  
+  // Content Strategy
+  contentStrategy Json?             // Content strategy configuration
+  postingSchedule Json?             // Posting schedule configuration
+  hashtagStrategy Json?             // Hashtag strategy
+  
+  // Budget and Goals
+  budget          Float?
+  goals           Json?             // Campaign goals and KPIs
+  targetMetrics   Json?             // Target metrics to achieve
+  
+  // Performance Tracking
+  totalPosts      Int               @default(0)
+  totalReach      Int               @default(0)
+  totalEngagement Int               @default(0)
+  totalClicks     Int               @default(0)
+  performanceScore Float?           @default(0)
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  posts           SocialMediaPost[]
+  accounts        SocialMediaAccount[]
+  analytics       SocialCampaignAnalytics[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([campaignType])
+  @@map("social_media_campaigns")
+}
+
+// Content Templates - Reusable content templates
+model ContentTemplate {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String
+  
+  // Template Information
+  name            String
+  description     String?
+  category        SocialTemplateCategory  @default(GENERAL)
+  
+  // Template Content
+  content         String            @db.Text
+  variables       Json?             // Template variables for personalization
+  defaultHashtags String[]          @default([])
+  
+  // Platform Configuration
+  targetPlatforms SocialPlatform[]  @default([])
+  platformVariations Json?          // Platform-specific variations
+  
+  // Media and Assets
+  defaultMedia    Json?             // Default media attachments
+  designAssets    Json?             // Design assets and resources
+  
+  // Usage and Performance
+  usageCount      Int               @default(0)
+  averageEngagement Float?          @default(0)
+  lastUsed        DateTime?
+  
+  // Template Metadata
+  isPublic        Boolean           @default(false)
+  tags            String[]          @default([])
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([category])
+  @@map("content_templates")
+}
+
+// Social Content Calendar - Content planning and scheduling
+model SocialContentCalendar {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String
+  
+  // Calendar Information
+  name            String
+  description     String?
+  calendarType    CalendarType      @default(MONTHLY)
+  
+  // Calendar Configuration
+  timezone        String            @default("UTC")
+  defaultPlatforms SocialPlatform[] @default([])
+  workingHours    Json?             // Working hours configuration
+  
+  // Content Planning
+  contentThemes   Json?             // Monthly/weekly content themes
+  postingFrequency Json?            // Posting frequency per platform
+  contentMix      Json?             // Content type distribution
+  
+  // Calendar Status
+  isActive        Boolean           @default(true)
+  currentPeriod   String?           // Current planning period
+  
+  // Performance Tracking
+  postsScheduled  Int               @default(0)
+  postsPublished  Int               @default(0)
+  averageEngagement Float?          @default(0)
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  calendarEvents  CalendarEvent[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([calendarType])
+  @@map("social_content_calendars")
+}
+
+// Calendar Events - Individual events in content calendar
+model CalendarEvent {
+  id              String            @id @default(cuid())
+  calendarId      String
+  postId          String?
+  
+  // Event Information
+  title           String
+  description     String?
+  eventType       EventType         @default(POST)
+  
+  // Event Timing
+  startDate       DateTime
+  endDate         DateTime?
+  isAllDay        Boolean           @default(false)
+  timezone        String            @default("UTC")
+  
+  // Event Configuration
+  platforms       SocialPlatform[]  @default([])
+  accountIds      String[]          @default([])
+  
+  // Event Content
+  contentPreview  String?           @db.Text
+  mediaPreview    Json?             // Preview of media attachments
+  hashtags        String[]          @default([])
+  
+  // Event Status
+  status          EventStatus       @default(PLANNED)
+  completedAt     DateTime?
+  
+  // Relations
+  calendar        SocialContentCalendar @relation(fields: [calendarId], references: [id])
+  post            SocialMediaPost?  @relation(fields: [postId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([calendarId])
+  @@index([postId])
+  @@index([startDate])
+  @@index([status])
+  @@map("calendar_events")
+}
+
+// Social Media Analytics - Account-level analytics
+model SocialMediaAnalytics {
+  id              String            @id @default(cuid())
+  accountId       String
+  
+  // Analytics Period
+  date            DateTime
+  period          AnalyticsPeriod   @default(DAILY)
+  
+  // Follower Metrics
+  followerCount   Int               @default(0)
+  followerGrowth  Int               @default(0)
+  followingCount  Int               @default(0)
+  
+  // Content Metrics
+  postsPublished  Int               @default(0)
+  totalReach      Int               @default(0)
+  totalImpressions Int              @default(0)
+  totalEngagement Int               @default(0)
+  
+  // Engagement Breakdown
+  likes           Int               @default(0)
+  comments        Int               @default(0)
+  shares          Int               @default(0)
+  clicks          Int               @default(0)
+  saves           Int               @default(0)
+  
+  // Calculated Metrics
+  engagementRate  Float             @default(0)
+  reachRate       Float             @default(0)
+  clickThroughRate Float            @default(0)
+  
+  // Platform-Specific Metrics
+  platformSpecificMetrics Json?
+  
+  // Relations
+  account         SocialMediaAccount @relation(fields: [accountId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  
+  @@unique([accountId, date, period])
+  @@index([accountId])
+  @@index([date])
+  @@map("social_media_analytics")
+}
+
+// Post Analytics - Individual post performance
+model PostAnalytics {
+  id              String            @id @default(cuid())
+  postId          String
+  accountId       String
+  
+  // Analytics Period
+  date            DateTime
+  hoursAfterPost  Int               // Hours since post was published
+  
+  // Performance Metrics
+  reach           Int               @default(0)
+  impressions     Int               @default(0)
+  engagement      Int               @default(0)
+  
+  // Engagement Breakdown
+  likes           Int               @default(0)
+  comments        Int               @default(0)
+  shares          Int               @default(0)
+  clicks          Int               @default(0)
+  saves           Int               @default(0)
+  
+  // Advanced Metrics
+  videoViews      Int?              @default(0)
+  profileVisits   Int?              @default(0)
+  websiteClicks   Int?              @default(0)
+  
+  // Calculated Metrics
+  engagementRate  Float             @default(0)
+  viralityScore   Float?            @default(0)
+  
+  // Platform-Specific Metrics
+  platformSpecificMetrics Json?
+  
+  // Relations
+  post            SocialMediaPost   @relation(fields: [postId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  
+  @@unique([postId, accountId, date, hoursAfterPost])
+  @@index([postId])
+  @@index([accountId])
+  @@index([date])
+  @@map("post_analytics")
+}
+
+// Campaign Analytics - Campaign performance tracking
+model SocialCampaignAnalytics {
+  id              String            @id @default(cuid())
+  campaignId      String
+  
+  // Analytics Period
+  date            DateTime
+  period          AnalyticsPeriod   @default(DAILY)
+  
+  // Campaign Metrics
+  postsPublished  Int               @default(0)
+  totalReach      Int               @default(0)
+  totalImpressions Int              @default(0)
+  totalEngagement Int               @default(0)
+  totalClicks     Int               @default(0)
+  
+  // Budget and ROI
+  budgetSpent     Float?            @default(0)
+  costPerEngagement Float?          @default(0)
+  roi             Float?            @default(0)
+  
+  // Goal Progress
+  goalProgress    Json?             // Progress towards campaign goals
+  kpiMetrics      Json?             // Key performance indicators
+  
+  // Relations
+  campaign        SocialMediaCampaign @relation(fields: [campaignId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  
+  @@unique([campaignId, date, period])
+  @@index([campaignId])
+  @@index([date])
+  @@map("social_campaign_analytics")
+}
+
+// Social Media Management Enums
+enum SocialPlatform {
+  TWITTER
+  LINKEDIN
+  FACEBOOK
+  INSTAGRAM
+  YOUTUBE
+  TIKTOK
+  PINTEREST
+  SNAPCHAT
+  
+  @@map("social_platform")
+}
+
+enum SocialAccountType {
+  PERSONAL
+  BUSINESS
+  COMPANY_PAGE
+  CREATOR
+  
+  @@map("social_account_type")
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  EXPIRED
+  ERROR
+  PENDING
+  
+  @@map("connection_status")
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+  
+  @@map("post_status")
+}
+
+enum PublishingType {
+  IMMEDIATE
+  SCHEDULED
+  OPTIMAL_TIME
+  RECURRING
+  
+  @@map("publishing_type")
+}
+
+enum ContentType {
+  TEXT
+  IMAGE
+  VIDEO
+  CAROUSEL
+  STORY
+  REEL
+  ARTICLE
+  POLL
+  
+  @@map("content_type")
+}
+
+enum PostPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  
+  @@map("post_priority")
+}
+
+enum SocialCampaignType {
+  GENERAL
+  PRODUCT_LAUNCH
+  BRAND_AWARENESS
+  LEAD_GENERATION
+  EVENT_PROMOTION
+  SEASONAL
+  USER_GENERATED_CONTENT
+  
+  @@map("social_campaign_type")
+}
+
+enum SocialCampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  
+  @@map("social_campaign_status")
+}
+
+enum SocialTemplateCategory {
+  GENERAL
+  PROMOTIONAL
+  EDUCATIONAL
+  ENTERTAINMENT
+  NEWS
+  ANNOUNCEMENT
+  PERSONAL
+  
+  @@map("social_template_category")
+}
+
+enum CalendarType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  CUSTOM
+  
+  @@map("calendar_type")
+}
+
+enum EventType {
+  POST
+  CAMPAIGN_START
+  CAMPAIGN_END
+  MILESTONE
+  REMINDER
+  REVIEW
+  
+  @@map("event_type")
+}
+
+enum EventStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  MISSED
+  
+  @@map("event_status")
+}
+
+enum AnalyticsPeriod {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  
+  @@map("analytics_period")
+}
+
+// ============================================================================
+// WORKFLOW AUTOMATION SYSTEM MODELS
+// ============================================================================
+
+// Core Workflow Model - Main workflow definition and configuration
+model Workflow {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String
+  
+  // Workflow Basic Information
+  name            String
+  description     String?           @db.Text
+  workflowType    WorkflowType      @default(CUSTOM)
+  category        WorkflowCategory  @default(GENERAL)
+  version         String            @default("1.0.0")
+  isTemplate      Boolean           @default(false)
+  isPublic        Boolean           @default(false)
+  
+  // Workflow Definition
+  definition      Json              // Complete workflow definition including nodes, connections, flow
+  
+  // Execution Configuration
+  executionConfig Json?             // Execution settings, timeouts, retry policies
+  retryPolicy     Json?             // Retry configuration for failed executions
+  timeoutSettings Json?             // Timeout configurations
+  
+  // Integration Configuration
+  integrationConfig Json?           // Integration settings and credentials
+  dataMapping     Json?             // Data mapping configurations
+  
+  // n8n Integration
+  n8nWorkflowId   String?           // n8n workflow ID for external execution
+  n8nConfig       Json?             // n8n specific configuration
+  useN8nExecution Boolean           @default(false)
+  
+  // Workflow Status and Control
+  status          WorkflowStatus    @default(DRAFT)
+  isActive        Boolean           @default(false)
+  lastExecuted    DateTime?
+  nextScheduledExecution DateTime?
+  
+  // Performance Metrics
+  executionCount  Int               @default(0)
+  successCount    Int               @default(0)
+  failureCount    Int               @default(0)
+  successRate     Float             @default(0)
+  avgExecutionTime Float            @default(0)
+  
+  // Performance and Error Tracking
+  performanceMetrics Json?          // Detailed performance metrics
+  errorMetrics    Json?             // Error statistics and patterns
+  optimizationData Json?            // Optimization suggestions and data
+  
+  // Workflow Metadata
+  tags            String[]          @default([])
+  priority        WorkflowPriority  @default(MEDIUM)
+  environment     WorkflowEnvironment @default(PRODUCTION)
+  
+  // Access Control
+  accessLevel     AccessLevel       @default(PRIVATE)
+  sharedWith      String[]          @default([])
+  permissions     Json?             // Detailed permissions configuration
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  // Workflow Components
+  triggers        WorkflowTrigger[]
+  actions         WorkflowAction[]
+  conditions      WorkflowCondition[]
+  variables       WorkflowVariable[]
+  steps           WorkflowStep[]
+  
+  // Execution and Monitoring
+  executions      WorkflowExecution[]
+  monitoringConfigs WorkflowMonitoring[]
+  integrations    WorkflowIntegration[]
+  executionLogs   WorkflowExecutionLog[]
+  
+  // Template Relations
+  templateVersions WorkflowTemplate[] @relation("TemplateWorkflow")
+  basedOnTemplate WorkflowTemplate?  @relation("WorkflowFromTemplate", fields: [templateId], references: [id])
+  templateId      String?
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  createdBy       String
+  lastModifiedBy  String?
+  
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([workflowType])
+  @@index([status])
+  @@index([isActive])
+  @@index([isTemplate])
+  @@index([category])
+  @@map("workflows")
+}
+
+// Workflow Execution Model - Records of workflow executions
+model WorkflowExecution {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Execution Identification
+  executionType   ExecutionType     @default(MANUAL)
+  triggeredBy     TriggerSource     @default(MANUAL)
+  triggerData     Json?             // Data from trigger that started execution
+  
+  // Execution State
+  status          WorkflowExecutionStatus @default(PENDING)
+  currentStep     String?
+  completedSteps  String[]          @default([])
+  failedSteps     String[]          @default([])
+  skippedSteps    String[]          @default([])
+  
+  // Timing Information
+  startedAt       DateTime          @default(now())
+  completedAt     DateTime?
+  duration        Int?              // Duration in milliseconds
+  
+  // Execution Context
+  executionContext Json?            // Context data for execution
+  inputVariables  Json?             // Input variables at start
+  outputVariables Json?             // Output variables at completion
+  
+  // Execution Results
+  results         Json?             // Detailed execution results
+  outputs         Json?             // Final outputs
+  errors          Json?             // Error details and stack traces
+  
+  // Performance Data
+  performanceData Json?             // Performance metrics for this execution
+  resourceUsage   Json?             // Resource usage statistics
+  
+  // n8n Integration Data
+  n8nExecutionId  String?           // n8n execution ID if executed via n8n
+  n8nData         Json?             // n8n specific execution data
+  
+  // Monitoring Data
+  monitoringData  Json?             // Monitoring and observability data
+  debugInfo       Json?             // Debug information for troubleshooting
+  
+  // Metadata
+  executionMetadata Json?           // Additional execution metadata
+  parentExecutionId String?         // For nested or sub-workflow executions
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  executionLogs   WorkflowExecutionLog[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([executionType])
+  @@index([startedAt])
+  @@map("workflow_executions")
+}
+
+// Workflow Trigger Model - Trigger definitions and configurations
+model WorkflowTrigger {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Trigger Basic Information
+  name            String
+  description     String?           @db.Text
+  triggerType     TriggerType
+  
+  // Trigger Configuration
+  configuration   Json              // Trigger-specific configuration
+  conditions      Json?             // Conditions for trigger activation
+  
+  // Schedule Configuration (for scheduled triggers)
+  scheduleConfig  Json?             // Cron expressions, intervals, etc.
+  timezone        String?           @default("UTC")
+  
+  // Event Configuration (for event triggers)
+  eventSource     String?           // Source of events (webhook, database, etc.)
+  eventFilters    Json?             // Filters for event matching
+  
+  // Webhook Configuration (for webhook triggers)
+  webhookUrl      String?           // Generated webhook URL
+  webhookSecret   String?           // Webhook validation secret
+  webhookConfig   Json?             // Webhook specific configuration
+  
+  // Integration Configuration
+  integrationId   String?           // Related integration ID
+  integrationConfig Json?           // Integration specific settings
+  
+  // Trigger State and Control
+  isEnabled       Boolean           @default(true)
+  priority        TriggerPriority   @default(MEDIUM)
+  rateLimit       Json?             // Rate limiting configuration
+  
+  // Monitoring and Statistics
+  lastTriggered   DateTime?
+  triggerCount    Int               @default(0)
+  successCount    Int               @default(0)
+  failureCount    Int               @default(0)
+  avgResponseTime Float             @default(0)
+  
+  // Error Handling
+  errorHandling   Json?             // Error handling configuration
+  retryPolicy     Json?             // Retry policy for failed triggers
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([triggerType])
+  @@index([isEnabled])
+  @@map("workflow_triggers")
+}
+
+// Workflow Action Model - Action definitions and configurations
+model WorkflowAction {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Action Basic Information
+  name            String
+  description     String?           @db.Text
+  actionType      ActionType
+  
+  // Action Configuration
+  configuration   Json              // Action-specific configuration
+  inputMapping    Json?             // Input data mapping
+  outputMapping   Json?             // Output data mapping
+  
+  // Execution Configuration
+  executionOrder  Int               @default(0)
+  parallelExecution Boolean         @default(false)
+  dependencies    String[]          @default([]) // IDs of actions this depends on
+  
+  // Integration Configuration
+  integrationId   String?           // Related integration ID
+  integrationConfig Json?           // Integration specific settings
+  serviceEndpoint String?           // API endpoint for service calls
+  authConfig      Json?             // Authentication configuration
+  
+  // Error Handling and Retry
+  errorHandling   Json?             // Error handling configuration
+  retryPolicy     Json?             // Retry policy for failed actions
+  timeout         Int?              // Timeout in milliseconds
+  continueOnFailure Boolean         @default(false)
+  
+  // Conditional Execution
+  executionConditions Json?         // Conditions for action execution
+  skipConditions  Json?             // Conditions to skip action
+  
+  // Performance Configuration
+  cacheConfig     Json?             // Caching configuration
+  optimizationConfig Json?          // Performance optimization settings
+  
+  // Monitoring and Statistics
+  executionCount  Int               @default(0)
+  successCount    Int               @default(0)
+  failureCount    Int               @default(0)
+  avgExecutionTime Float            @default(0)
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([actionType])
+  @@index([executionOrder])
+  @@map("workflow_actions")
+}
+
+// Workflow Condition Model - Condition logic and evaluation
+model WorkflowCondition {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Condition Basic Information
+  name            String
+  description     String?           @db.Text
+  conditionType   ConditionType
+  
+  // Condition Logic
+  logicExpression String            @db.Text
+  evaluationRules Json              // Rules for condition evaluation
+  
+  // Input and Output
+  inputVariables  Json?             // Variables used in condition
+  outputVariables Json?             // Variables set by condition
+  
+  // Condition Configuration
+  configuration   Json?             // Condition-specific configuration
+  operators       Json?             // Available operators for condition
+  defaultResult   Boolean           @default(false)
+  
+  // Execution Configuration
+  evaluationOrder Int               @default(0)
+  appliesTo       String[]          @default([]) // Action IDs this condition applies to
+  
+  // Error Handling
+  errorHandling   Json?             // Error handling for condition evaluation
+  fallbackValue   Boolean?          // Fallback value if evaluation fails
+  
+  // Performance and Caching
+  cacheResults    Boolean           @default(false)
+  cacheExpiry     Int?              // Cache expiry in seconds
+  
+  // Monitoring and Statistics
+  evaluationCount Int               @default(0)
+  trueCount       Int               @default(0)
+  falseCount      Int               @default(0)
+  errorCount      Int               @default(0)
+  avgEvaluationTime Float           @default(0)
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([conditionType])
+  @@index([evaluationOrder])
+  @@map("workflow_conditions")
+}
+
+// Workflow Variable Model - Variables and data management
+model WorkflowVariable {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Variable Basic Information
+  name            String
+  description     String?           @db.Text
+  variableType    VariableType
+  
+  // Variable Configuration
+  dataType        VariableDataType
+  defaultValue    Json?             // Default value
+  currentValue    Json?             // Current value
+  
+  // Variable Constraints
+  isRequired      Boolean           @default(false)
+  isReadOnly      Boolean           @default(false)
+  validation      Json?             // Validation rules
+  constraints     Json?             // Value constraints
+  
+  // Variable Scope
+  scope           VariableScope     @default(WORKFLOW)
+  accessibility   VariableAccessibility @default(PRIVATE)
+  
+  // Data Source
+  dataSource      VariableDataSource? 
+  sourceConfig    Json?             // Source-specific configuration
+  refreshInterval Int?              // Auto-refresh interval in seconds
+  
+  // Security and Encryption
+  isEncrypted     Boolean           @default(false)
+  encryptionKey   String?           // Encryption key reference
+  maskInLogs      Boolean           @default(false)
+  
+  // Monitoring and History
+  lastUpdated     DateTime?
+  updateCount     Int               @default(0)
+  valueHistory    Json?             // History of value changes
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@unique([workflowId, name])
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([variableType])
+  @@index([scope])
+  @@map("workflow_variables")
+}
+
+// Workflow Step Model - Individual workflow steps
+model WorkflowStep {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Step Basic Information
+  name            String
+  description     String?           @db.Text
+  stepType        WorkflowStepType
+  
+  // Step Position and Flow
+  positionX       Float             @default(0)
+  positionY       Float             @default(0)
+  executionOrder  Int               @default(0)
+  
+  // Step Configuration
+  configuration   Json              // Step-specific configuration
+  inputs          Json?             // Input configuration
+  outputs         Json?             // Output configuration
+  
+  // Flow Control
+  nextSteps       String[]          @default([]) // IDs of next steps
+  previousSteps   String[]          @default([]) // IDs of previous steps
+  conditionalPaths Json?            // Conditional flow paths
+  
+  // Execution Configuration
+  isEnabled       Boolean           @default(true)
+  canSkip         Boolean           @default(false)
+  required        Boolean           @default(true)
+  
+  // Error Handling
+  errorHandling   Json?             // Error handling configuration
+  rollbackConfig  Json?             // Rollback configuration
+  
+  // Performance Configuration
+  timeout         Int?              // Timeout in milliseconds
+  retryConfig     Json?             // Retry configuration
+  parallelConfig  Json?             // Parallel execution configuration
+  
+  // Monitoring Data
+  executionCount  Int               @default(0)
+  successCount    Int               @default(0)
+  failureCount    Int               @default(0)
+  skipCount       Int               @default(0)
+  avgExecutionTime Float            @default(0)
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([stepType])
+  @@index([executionOrder])
+  @@map("workflow_steps")
+}
+
+// Workflow Template Model - Reusable workflow templates
+model WorkflowTemplate {
+  id              String            @id @default(cuid())
+  userId          String
+  workspaceId     String?
+  
+  // Template Basic Information
+  name            String
+  description     String?           @db.Text
+  templateType    WorkflowType
+  category        WorkflowCategory  @default(GENERAL)
+  version         String            @default("1.0.0")
+  
+  // Template Definition
+  templateDefinition Json           // Template structure and configuration
+  defaultConfiguration Json?       // Default configuration values
+  customizationOptions Json?       // Available customization options
+  
+  // Template Metadata
+  tags            String[]          @default([])
+  industry        String?           // Target industry
+  useCase         String?           // Primary use case
+  complexity      TemplateComplexity @default(MEDIUM)
+  
+  // Template Status
+  status          TemplateStatus    @default(DRAFT)
+  isPublic        Boolean           @default(false)
+  isFeatured      Boolean           @default(false)
+  isVerified      Boolean           @default(false)
+  
+  // Usage Statistics
+  usageCount      Int               @default(0)
+  installCount    Int               @default(0)
+  rating          Float?            @default(0)
+  ratingCount     Int               @default(0)
+  
+  // Template Content
+  instructions    String?           @db.Text
+  documentation   String?           @db.Text
+  examples        Json?             // Example configurations
+  prerequisites   Json?             // Prerequisites and requirements
+  
+  // Integration Requirements
+  requiredIntegrations String[]     @default([])
+  optionalIntegrations String[]     @default([])
+  minimumPermissions Json?          // Required permissions
+  
+  // Version Control
+  parentTemplateId String?          // Parent template for versioning
+  isLatestVersion Boolean           @default(true)
+  changeLog       Json?             // Change log for version
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace?        @relation(fields: [workspaceId], references: [id])
+  workflows       Workflow[]        @relation("TemplateWorkflow")
+  createdWorkflows Workflow[]       @relation("WorkflowFromTemplate")
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  publishedAt     DateTime?
+  
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([templateType])
+  @@index([category])
+  @@index([status])
+  @@index([isPublic])
+  @@index([isFeatured])
+  @@map("workflow_templates")
+}
+
+// Workflow Integration Model - External service integrations
+model WorkflowIntegration {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Integration Basic Information
+  name            String
+  description     String?           @db.Text
+  integrationType IntegrationType
+  
+  // Integration Configuration
+  configuration   Json              // Integration-specific configuration
+  credentials     Json?             // Encrypted credentials
+  authConfig      Json?             // Authentication configuration
+  
+  // Connection Details
+  serviceEndpoint String?           // Service endpoint URL
+  apiVersion      String?           // API version
+  connectionStatus IntegrationStatus @default(DISCONNECTED)
+  
+  // Integration Capabilities
+  capabilities    Json?             // Available capabilities
+  permissions     Json?             // Required permissions
+  rateLimit       Json?             // Rate limiting configuration
+  
+  // Data Mapping
+  dataMapping     Json?             // Data transformation mapping
+  fieldMapping    Json?             // Field mapping configuration
+  
+  // Error Handling and Monitoring
+  errorHandling   Json?             // Error handling configuration
+  monitoringConfig Json?            // Monitoring configuration
+  healthCheck     Json?             // Health check configuration
+  
+  // Usage Statistics
+  requestCount    Int               @default(0)
+  successCount    Int               @default(0)
+  errorCount      Int               @default(0)
+  lastUsed        DateTime?
+  
+  // Security Configuration
+  isSecure        Boolean           @default(true)
+  encryptionLevel EncryptionLevel   @default(STANDARD)
+  ipWhitelist     String[]          @default([])
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  lastConnected   DateTime?
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([integrationType])
+  @@index([connectionStatus])
+  @@map("workflow_integrations")
+}
+
+// Workflow Monitoring Model - Monitoring and alerting configuration
+model WorkflowMonitoring {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Monitoring Basic Information
+  name            String
+  description     String?           @db.Text
+  monitoringType  MonitoringType
+  
+  // Monitoring Configuration
+  configuration   Json              // Monitoring-specific configuration
+  metrics         Json?             // Metrics to monitor
+  thresholds      Json?             // Alerting thresholds
+  
+  // Alerting Configuration
+  alertConfig     Json?             // Alert configuration
+  notificationChannels String[]     @default([])
+  escalationRules Json?             // Escalation rules
+  
+  // Monitoring Schedule
+  isEnabled       Boolean           @default(true)
+  checkInterval   Int               @default(300) // Check interval in seconds
+  scheduleConfig  Json?             // Schedule configuration
+  
+  // Performance Monitoring
+  performanceMetrics Json?          // Performance metrics configuration
+  performanceThresholds Json?       // Performance alerting thresholds
+  
+  // Error Monitoring
+  errorTracking   Json?             // Error tracking configuration
+  errorPatterns   Json?             // Error pattern matching
+  errorThresholds Json?             // Error rate thresholds
+  
+  // Health Monitoring
+  healthChecks    Json?             // Health check configuration
+  uptime          Float?            @default(100)
+  availability    Float?            @default(100)
+  
+  // Monitoring Data
+  lastCheck       DateTime?
+  lastAlert       DateTime?
+  checkCount      Int               @default(0)
+  alertCount      Int               @default(0)
+  
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([monitoringType])
+  @@index([isEnabled])
+  @@map("workflow_monitoring")
+}
+
+// Workflow Execution Log Model - Detailed execution logs
+model WorkflowExecutionLog {
+  id              String            @id @default(cuid())
+  executionId     String
+  workflowId      String
+  userId          String
+  workspaceId     String
+  
+  // Log Entry Information
+  logLevel        LogLevel          @default(INFO)
+  message         String            @db.Text
+  timestamp       DateTime          @default(now())
+  
+  // Log Context
+  stepId          String?           // Related step ID
+  actionId        String?           // Related action ID
+  component       String?           // Component that generated the log
+  
+  // Log Data
+  logData         Json?             // Additional log data
+  errorDetails    Json?             // Error details if error log
+  performanceData Json?             // Performance data
+  
+  // Log Metadata
+  correlationId   String?           // Correlation ID for tracing
+  traceId         String?           // Trace ID for distributed tracing
+  sessionId       String?           // Session ID
+  
+  // Relations
+  execution       WorkflowExecution @relation(fields: [executionId], references: [id])
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id])
+  
+  @@index([executionId])
+  @@index([workflowId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([logLevel])
+  @@index([timestamp])
+  @@map("workflow_execution_logs")
+}
+
+// ============================================================================
+// WORKFLOW AUTOMATION ENUMS
+// ============================================================================
+
+enum WorkflowType {
+  LEAD_PROCESSING
+  CUSTOMER_ONBOARDING
+  CONTENT_PUBLISHING
+  DATA_SYNCHRONIZATION
+  ALERT_MANAGEMENT
+  SALES_AUTOMATION
+  MARKETING_AUTOMATION
+  OPERATIONS_AUTOMATION
+  EMAIL_AUTOMATION
+  SOCIAL_MEDIA_AUTOMATION
+  REPORTING_AUTOMATION
+  BACKUP_AUTOMATION
+  NOTIFICATION_AUTOMATION
+  INTEGRATION_AUTOMATION
+  CUSTOM
+  
+  @@map("workflow_type")
+}
+
+enum WorkflowCategory {
+  GENERAL
+  SALES
+  MARKETING
+  OPERATIONS
+  FINANCE
+  HR
+  CUSTOMER_SERVICE
+  DEVELOPMENT
+  ANALYTICS
+  SECURITY
+  INTEGRATION
+  
+  @@map("workflow_category")
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  DISABLED
+  ERROR
+  ARCHIVED
+  TESTING
+  
+  @@map("workflow_status")
+}
+
+enum WorkflowPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+  
+  @@map("workflow_priority")
+}
+
+enum WorkflowEnvironment {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+  
+  @@map("workflow_environment")
+}
+
+enum AccessLevel {
+  PRIVATE
+  TEAM
+  WORKSPACE
+  PUBLIC
+  
+  @@map("access_level")
+}
+
+enum WorkflowExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  TIMEOUT
+  PAUSED
+  
+  @@map("workflow_execution_status")
+}
+
+enum TriggerType {
+  MANUAL
+  SCHEDULED
+  WEBHOOK
+  EVENT
+  API
+  FILE_UPLOAD
+  EMAIL_RECEIVED
+  DATABASE_CHANGE
+  FORM_SUBMISSION
+  SOCIAL_MEDIA_EVENT
+  CUSTOM
+  
+  @@map("trigger_type")
+}
+
+enum TriggerSource {
+  MANUAL
+  SYSTEM
+  API
+  WEBHOOK
+  SCHEDULE
+  EVENT
+  
+  @@map("trigger_source")
+}
+
+enum ExecutionType {
+  MANUAL
+  TRIGGERED
+  SCHEDULED
+  WEBHOOK
+  API
+  
+  @@map("execution_type")
+}
+
+enum TriggerPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  
+  @@map("trigger_priority")
+}
+
+enum ActionType {
+  HTTP_REQUEST
+  DATABASE_QUERY
+  EMAIL_SEND
+  SMS_SEND
+  FILE_OPERATION
+  DATA_TRANSFORMATION
+  NOTIFICATION
+  INTEGRATION_CALL
+  CUSTOM_CODE
+  CONDITION_CHECK
+  DELAY
+  LOOP
+  PARALLEL_EXECUTION
+  CUSTOM
+  
+  @@map("action_type")
+}
+
+enum ConditionType {
+  SIMPLE
+  COMPLEX
+  JAVASCRIPT
+  PYTHON
+  SQL
+  REGEX
+  CUSTOM
+  
+  @@map("condition_type")
+}
+
+enum VariableType {
+  INPUT
+  OUTPUT
+  INTERNAL
+  GLOBAL
+  CONSTANT
+  COMPUTED
+  
+  @@map("variable_type")
+}
+
+enum VariableDataType {
+  STRING
+  NUMBER
+  BOOLEAN
+  OBJECT
+  ARRAY
+  DATE
+  FILE
+  JSON
+  
+  @@map("variable_data_type")
+}
+
+enum VariableScope {
+  WORKFLOW
+  EXECUTION
+  STEP
+  ACTION
+  GLOBAL
+  
+  @@map("variable_scope")
+}
+
+enum VariableAccessibility {
+  PRIVATE
+  PROTECTED
+  PUBLIC
+  
+  @@map("variable_accessibility")
+}
+
+enum VariableDataSource {
+  USER_INPUT
+  API_RESPONSE
+  DATABASE_QUERY
+  FILE_CONTENT
+  COMPUTED
+  CONSTANT
+  
+  @@map("variable_data_source")
+}
+
+enum WorkflowStepType {
+  TRIGGER
+  ACTION
+  CONDITION
+  DECISION
+  LOOP
+  PARALLEL
+  MERGE
+  DELAY
+  NOTIFICATION
+  INTEGRATION
+  CUSTOM
+  
+  @@map("workflow_step_type")
+}
+
+enum TemplateComplexity {
+  SIMPLE
+  MEDIUM
+  COMPLEX
+  EXPERT
+  
+  @@map("template_complexity")
+}
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  DEPRECATED
+  ARCHIVED
+  
+  @@map("template_status")
+}
+
+enum IntegrationType {
+  API
+  DATABASE
+  EMAIL
+  SMS
+  FILE_STORAGE
+  SOCIAL_MEDIA
+  CRM
+  ERP
+  PAYMENT
+  ANALYTICS
+  WEBHOOK
+  CUSTOM
+  
+  @@map("integration_type")
+}
+
+enum IntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  PENDING
+  EXPIRED
+  
+  @@map("integration_status")
+}
+
+enum EncryptionLevel {
+  NONE
+  BASIC
+  STANDARD
+  ADVANCED
+  
+  @@map("encryption_level")
+}
+
+enum MonitoringType {
+  PERFORMANCE
+  ERROR
+  HEALTH
+  SECURITY
+  USAGE
+  CUSTOM
+  
+  @@map("monitoring_type")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+  
+  @@map("log_level")
 }

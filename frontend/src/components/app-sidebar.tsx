@@ -34,6 +34,14 @@ import {
   IconPhone,
   IconBriefcase,
   IconMessageCircle,
+  IconReportAnalytics,
+  IconFileText,
+  IconEye,
+  IconAdjustments,
+  IconDatabase,
+  IconCpu,
+  IconShield,
+  IconDownload,
 } from "@tabler/icons-react";
 
 import {
@@ -89,9 +97,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "CEO Dashboard",
             url: "/dashboard/ceo",
-        icon: IconDashboard,
-      },
-      {
+            icon: IconDashboard,
+          },
+          {
             title: "AI Agents",
             url: "/dashboard/ceo/agents",
             icon: IconBrain,
@@ -115,6 +123,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "Data Analytics",
             url: "/dashboard/ceo/data",
             icon: IconChartBar,
+            items: [
+              {
+                title: "Data Dashboard",
+                url: "/dashboard/ceo/data",
+                icon: IconChartBar,
+              },
+              {
+                title: "Data Sources",
+                url: "/dashboard/ceo/data/sources",
+                icon: IconDatabase,
+              },
+              {
+                title: "Data Processing",
+                url: "/dashboard/ceo/data/processing",
+                icon: IconCpu,
+              },
+              {
+                title: "Data Quality",
+                url: "/dashboard/ceo/data/quality",
+                icon: IconShield,
+              },
+              {
+                title: "Data Export",
+                url: "/dashboard/ceo/data/export",
+                icon: IconDownload,
+              },
+              {
+                title: "Data Settings",
+                url: "/dashboard/ceo/data/settings",
+                icon: IconSettings,
+              },
+            ],
           },
           {
             title: "Social Media",
@@ -129,6 +169,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
+        title: "Analytics & Insights",
+        url: "#",
+        icon: IconReportAnalytics,
+        items: [
+          {
+            title: "Analytics Dashboard",
+            url: "/dashboard/ceo/analytics",
+            icon: IconChartBar,
+          },
+          {
+            title: "AI Insights",
+            url: "/dashboard/ceo/analytics/insights",
+            icon: IconBulb,
+          },
+          {
+            title: "Visualizations",
+            url: "/dashboard/ceo/analytics/visualizations",
+            icon: IconEye,
+          },
+          {
+            title: "Reports",
+            url: "/dashboard/ceo/analytics/reports",
+            icon: IconFileText,
+          },
+          {
+            title: "Settings",
+            url: "/dashboard/ceo/analytics/settings",
+            icon: IconAdjustments,
+          },
+        ],
+      },
+      {
         title: "CRM & Business",
         url: "#",
         icon: IconBuilding,
@@ -137,21 +209,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "CRM Dashboard",
             url: "/dashboard/crm",
             icon: IconChartPie,
-      },
-      {
-        title: "Leads",
+          },
+          {
+            title: "Leads",
             url: "/dashboard/crm/leads",
             icon: IconTarget,
-      },
-      {
+          },
+          {
             title: "Customers",
             url: "/dashboard/crm/customers",
-        icon: IconUserCircle,
-      },
-      {
+            icon: IconUserCircle,
+          },
+          {
             title: "Businesses",
             url: "/dashboard/crm/businesses",
-        icon: IconBuildingSkyscraper,
+            icon: IconBuildingSkyscraper,
           },
           {
             title: "Applications",
@@ -242,7 +314,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard">
+              <a href="/dashboard/ceo">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">AGENT CEO</span>
               </a>

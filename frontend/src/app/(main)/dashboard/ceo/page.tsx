@@ -83,32 +83,32 @@ export default async function CeoDashboard() {
           { label: "CEO Dashboard", isCurrentPage: true },
         ]}
       />
-        <main className="p-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight">CRM Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
-              Oversikt over din pipeline og aktiviteter
+        <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">CRM Dashboard</h1>
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
+              Overview of your pipeline and activities
             </p>
           </div>
 
           {/* Main metric cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Nye Leads</CardTitle>
+                <CardTitle className="text-sm font-medium">New Leads</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{leadsCount}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Leads som ennå ikke er kontaktet
+                  Leads not yet contacted
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">I Dialog</CardTitle>
+                <CardTitle className="text-sm font-medium">In Dialogue</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -117,10 +117,10 @@ export default async function CeoDashboard() {
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-xs">
-                    {prospectsCount} Kontaktet
+                    {prospectsCount} Contacted
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {qualifiedCount} Kvalifisert
+                    {qualifiedCount} Qualified
                   </Badge>
                 </div>
               </CardContent>
@@ -128,13 +128,13 @@ export default async function CeoDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Kunder</CardTitle>
+                <CardTitle className="text-sm font-medium">Customers</CardTitle>
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{customersCount}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Aktive kunder
+                  Active customers
                 </p>
               </CardContent>
             </Card>
@@ -142,7 +142,7 @@ export default async function CeoDashboard() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Potensiell Verdi
+                  Potential Value
                 </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -155,14 +155,14 @@ export default async function CeoDashboard() {
                   }).format(totalPotentialValue)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Total potensiell verdi i pipeline
+                  Total potential value in pipeline
                 </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Main dashboard content - three columns on large screens */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-6 sm:mb-8">
             {/* Pipeline Overview */}
             <Card className="lg:col-span-1">
               <CardHeader>
@@ -171,13 +171,13 @@ export default async function CeoDashboard() {
                   Pipeline Status
                 </CardTitle>
                 <CardDescription>
-                  Oversikt over leads i ulike stadier
+                  Overview of leads in different stages
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Nye leads</div>
+                    <div className="w-24 text-sm font-medium">New leads</div>
                     <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className="bg-blue-300 h-full"
@@ -200,7 +200,7 @@ export default async function CeoDashboard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Kontaktet</div>
+                    <div className="w-24 text-sm font-medium">Contacted</div>
                     <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className="bg-indigo-300 h-full"
@@ -225,7 +225,7 @@ export default async function CeoDashboard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Kvalifisert</div>
+                    <div className="w-24 text-sm font-medium">Qualified</div>
                     <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className="bg-purple-300 h-full"
@@ -250,7 +250,7 @@ export default async function CeoDashboard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm font-medium">Kunder</div>
+                    <div className="w-24 text-sm font-medium">Customers</div>
                     <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className="bg-green-300 h-full"
@@ -278,7 +278,7 @@ export default async function CeoDashboard() {
                 <div className="mt-6">
                   <Link href="/leads">
                     <Button variant="outline" className="w-full">
-                      <span>Se alle leads</span>
+                      <span>View all leads</span>
                       <ArrowUpRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
@@ -289,9 +289,9 @@ export default async function CeoDashboard() {
             {/* Recent Leads */}
             <Card className="lg:col-span-1">
               <CardHeader>
-                <CardTitle>Siste Leads</CardTitle>
+                <CardTitle>Recent Leads</CardTitle>
                 <CardDescription>
-                  Nylig registrerte leads i systemet
+                  Recently registered leads in the system
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -319,19 +319,19 @@ export default async function CeoDashboard() {
                               className="text-xs"
                             >
                               {lead.stage === "lead"
-                                ? "Ny"
+                                ? "New"
                                 : lead.stage === "prospect"
-                                ? "Kontaktet"
-                                : "Kvalifisert"}
+                                ? "Contacted"
+                                : "Qualified"}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {lead.contactPerson || lead.email}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Registrert:{" "}
+                            Registered:{" "}
                             {new Date(lead.createdAt).toLocaleDateString(
-                              "no-NO"
+                              "en-GB"
                             )}
                           </p>
                         </div>
@@ -339,7 +339,7 @@ export default async function CeoDashboard() {
                     ))
                   ) : (
                     <p className="text-center text-muted-foreground py-8">
-                      Ingen nye leads funnet
+                      No new leads found
                     </p>
                   )}
                 </div>
@@ -347,7 +347,7 @@ export default async function CeoDashboard() {
                 <div className="mt-4">
                   <Link href="/leads/new">
                     <Button disabled className="w-full">
-                      <span>Opprett ny lead</span>
+                      <span>Create new lead</span>
                       <ArrowUpRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
@@ -362,7 +362,7 @@ export default async function CeoDashboard() {
           </div>
 
           {/* Additional dashboard charts */}
-          <div className="grid gap-6 md:grid-cols-2 mb-8">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 mb-6 sm:mb-8">
             {/* Ticket Distribution Chart */}
             <div className="md:col-span-1">
               <TicketDistributionChart />
@@ -380,18 +380,17 @@ export default async function CeoDashboard() {
     console.error("Dashboard data fetch error:", error);
     return (
       <AppLayout>
-        <main className="p-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight">CRM Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
+        <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">CRM Dashboard</h1>
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
               Oversikt over din pipeline og aktiviteter
             </p>
           </div>
-          
           <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">
-                Det oppstod en feil ved lasting av dashboard-data. Vennligst prøv igjen senere.
+            <CardContent className="p-4 sm:p-6">
+              <p className="text-muted-foreground text-sm sm:text-base">
+                An error occurred while loading dashboard data. Please try again later.
               </p>
             </CardContent>
           </Card>

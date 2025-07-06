@@ -23,9 +23,9 @@ export async function TicketDistributionChart() {
           <CardContent className="text-center text-muted-foreground">
             <div className="py-8">
               <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p>Ingen saker funnet.</p>
-              <p className="text-sm mt-1">Opprett saker for å se statistikk.</p>
-            </div>
+          <p>Ingen saker funnet.</p>
+          <p className="text-sm mt-1">Opprett saker for å se statistikk.</p>
+        </div>
           </CardContent>
         </Card>
       );
@@ -81,9 +81,9 @@ export async function TicketDistributionChart() {
         <CardContent className="text-center text-muted-foreground">
           <div className="py-8">
             <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p>Kunne ikke laste statistikk.</p>
-            <p className="text-sm mt-1">Prøv igjen senere.</p>
-          </div>
+        <p>Kunne ikke laste statistikk.</p>
+        <p className="text-sm mt-1">Prøv igjen senere.</p>
+      </div>
         </CardContent>
       </Card>
     );

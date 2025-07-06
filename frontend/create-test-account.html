@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test Social Media Account</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #1DA1F2;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #1991DB;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #fff5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Test Social Media Account</h1>
+        <p>This will create a test Twitter account for development purposes.</p>
+        
+        <button onclick="createTestAccount()">Create Test Twitter Account</button>
+        <button onclick="createTestLinkedInAccount()">Create Test LinkedIn Account</button>
+        <button onclick="createTestFacebookAccount()">Create Test Facebook Account</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function createTestAccount() {
+            try {
+                const response = await fetch('http://localhost:3000/api/social-media/accounts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        platform: 'TWITTER',
+                        accountType: 'BUSINESS',
+                        platformAccountId: `test_twitter_${Date.now()}`,
+                        username: `test_twitter_${Date.now()}`,
+                        displayName: 'Test Twitter Account',
+                        profileImageUrl: 'https://via.placeholder.com/150',
+                        accessToken: 'test_token',
+                        scopes: ['read', 'write']
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result">
+                            <h3>✅ Twitter Account Created Successfully!</h3>
+                            <p><strong>Platform:</strong> Twitter</p>
+                            <p><strong>Username:</strong> @${data.data.username}</p>
+                            <p><strong>Display Name:</strong> ${data.data.displayName}</p>
+                            <p>You can now create posts! Go to your social media dashboard.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Failed to create account');
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error Creating Account</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function createTestLinkedInAccount() {
+            try {
+                const response = await fetch('http://localhost:3000/api/social-media/accounts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        platform: 'LINKEDIN',
+                        accountType: 'BUSINESS',
+                        platformAccountId: `test_linkedin_${Date.now()}`,
+                        username: `test_linkedin_${Date.now()}`,
+                        displayName: 'Test LinkedIn Account',
+                        profileImageUrl: 'https://via.placeholder.com/150',
+                        accessToken: 'test_token',
+                        scopes: ['read', 'write']
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result">
+                            <h3>✅ LinkedIn Account Created Successfully!</h3>
+                            <p><strong>Platform:</strong> LinkedIn</p>
+                            <p><strong>Username:</strong> @${data.data.username}</p>
+                            <p><strong>Display Name:</strong> ${data.data.displayName}</p>
+                            <p>You can now create posts! Go to your social media dashboard.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Failed to create account');
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error Creating Account</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function createTestFacebookAccount() {
+            try {
+                const response = await fetch('http://localhost:3000/api/social-media/accounts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        platform: 'FACEBOOK',
+                        accountType: 'BUSINESS',
+                        platformAccountId: `test_facebook_${Date.now()}`,
+                        username: `test_facebook_${Date.now()}`,
+                        displayName: 'Test Facebook Account',
+                        profileImageUrl: 'https://via.placeholder.com/150',
+                        accessToken: 'test_token',
+                        scopes: ['read', 'write']
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result">
+                            <h3>✅ Facebook Account Created Successfully!</h3>
+                            <p><strong>Platform:</strong> Facebook</p>
+                            <p><strong>Username:</strong> @${data.data.username}</p>
+                            <p><strong>Display Name:</strong> ${data.data.displayName}</p>
+                            <p>You can now create posts! Go to your social media dashboard.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Failed to create account');
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error Creating Account</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 
