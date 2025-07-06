@@ -10,8 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AppLayout } from "@/components/app-layout";
-import { PageHeader } from "@/components/page-header";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { ProgressMetric } from "@/components/ui/progress-metric";
+import { TabbedContentLayout } from "@/components/ui/tabbed-content-layout";
+import { DeleteConfirmation, useDeleteConfirmation } from "@/components/ui/delete-confirmation";
+import { useAgent } from "@/lib/agents/agent-context";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   Brain,
@@ -26,7 +31,24 @@ import {
   Loader2,
   Trash2,
   Power,
-  Edit3
+  Edit3,
+  MessageSquare,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Target,
+  Clock,
+  DollarSign,
+  Users,
+  Zap,
+  Star,
+  Eye,
+  ArrowLeft,
+  RefreshCw,
+  Download,
+  Calendar,
+  Award,
+  Shield
 } from "lucide-react";
 
 // Agent type configurations (matching the ones from creation)
@@ -111,10 +133,10 @@ export default function EditAgentPage() {
   const router = useRouter();
   const params = useParams();
   const agentId = params.id as string;
+  const { getAgentById, updateAgent, deleteAgent, getAgentChats, setSelectedAgent } = useAgent();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [agent, setAgent] = useState<any>(null);
   const [formData, setFormData] = useState<AgentFormData>({
     name: '',
@@ -125,39 +147,34 @@ export default function EditAgentPage() {
     status: 'active'
   });
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { isOpen: isDeleteOpen, confirmDelete, closeDelete, deleteConfig } = useDeleteConfirmation();
 
   // Load agent data
   useEffect(() => {
-    const loadAgent = async () => {
-      try {
-        const response = await fetch(`/api/agents/${agentId}`);
-        if (!response.ok) throw new Error('Failed to load agent');
-        
-        const data = await response.json();
-        if (data.success) {
-          setAgent(data.agent);
-          setFormData({
-            name: data.agent.name,
-            specialization: data.agent.specialization,
-            model: data.agent.model,
-            avatar: data.agent.avatar,
-            maxConcurrentTasks: data.agent.maxConcurrentTasks,
-            status: data.agent.status
-          });
-        }
-      } catch (error) {
-        toast.error('Failed to load agent data');
-        router.push('/dashboard/ceo/agents');
-      } finally {
+    const loadAgent = () => {
+      const agentData = getAgentById(agentId);
+      if (agentData) {
+        setAgent(agentData);
+        setSelectedAgent(agentData);
+        setFormData({
+          name: agentData.name,
+          specialization: agentData.specialties[0] || '',
+          model: agentData.model,
+          avatar: agentData.avatar,
+          maxConcurrentTasks: agentData.maxConcurrentTasks,
+          status: agentData.status
+        });
         setIsLoading(false);
+      } else {
+        toast.error('Agent not found');
+        router.push('/dashboard/ceo/agents');
       }
     };
 
     if (agentId) {
       loadAgent();
     }
-  }, [agentId, router]);
+  }, [agentId, getAgentById, router, setSelectedAgent]);
 
   // Validation
   const validateForm = (): boolean => {
@@ -182,19 +199,17 @@ export default function EditAgentPage() {
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/agents/${agentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      const success = await updateAgent(agentId, {
+        name: formData.name,
+        specialties: [formData.specialization],
+        model: formData.model,
+        avatar: formData.avatar,
+        maxConcurrentTasks: formData.maxConcurrentTasks,
+        status: formData.status as any
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        toast.success('Agent updated successfully!');
+      if (success) {
         router.push('/dashboard/ceo/agents');
-      } else {
-        toast.error(data.error || 'Failed to update agent');
       }
     } catch (error) {
       toast.error('Failed to update agent');
@@ -206,232 +221,279 @@ export default function EditAgentPage() {
   // Handle status change
   const handleStatusChange = async (newStatus: string) => {
     try {
-      const response = await fetch(`/api/agents/${agentId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
+      const success = await updateAgent(agentId, { status: newStatus as any });
+      if (success) {
         setFormData(prev => ({ ...prev, status: newStatus }));
-        toast.success(`Agent status updated to ${newStatus}`);
-      } else {
-        toast.error(data.error || 'Failed to update status');
+        setAgent((prev: any) => ({ ...prev, status: newStatus }));
       }
     } catch (error) {
-      toast.error('Failed to update status');
+      toast.error('Failed to update agent status');
     }
   };
 
   // Handle delete
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/agents/${agentId}`, {
-        method: 'DELETE'
-      });
+  const handleDelete = () => {
+    confirmDelete({
+      title: "Delete Agent",
+      description: "Are you sure you want to delete this agent? This action cannot be undone and will permanently remove all associated data including chat history.",
+      itemName: agent?.name || "this agent",
+      itemType: "AI Agent",
+      confirmText: "Delete Agent",
+      variant: "danger",
+    });
+  };
 
-      const data = await response.json();
-      
-      if (data.success) {
-        toast.success('Agent deleted successfully');
-        router.push('/dashboard/ceo/agents');
-      } else {
-        toast.error(data.error || 'Failed to delete agent');
-      }
-    } catch (error) {
-      toast.error('Failed to delete agent');
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
+  const handleDeleteConfirm = async () => {
+    const success = await deleteAgent(agentId);
+    if (success) {
+      router.push('/dashboard/ceo/agents');
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500/10 text-green-600 border-green-500/20';
-      case 'busy': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'inactive': return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
-      case 'maintenance': return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
-      default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+      case "active": return "text-green-600";
+      case "maintenance": return "text-yellow-600";
+      case "inactive": return "text-gray-600";
+      default: return "text-gray-600";
     }
   };
 
+  const getTrendIcon = (direction: string) => {
+    if (direction === "up") return <TrendingUp className="h-4 w-4 text-green-500" />;
+    if (direction === "down") return <TrendingDown className="h-4 w-4 text-red-500" />;
+    return <Activity className="h-4 w-4 text-gray-500" />;
+  };
+
+  const getTrendColor = (direction: string) => {
+    if (direction === "up") return "text-green-600";
+    if (direction === "down") return "text-red-600";
+    return "text-gray-600";
+  };
+
+  // Get agent type info
+  const agentTypeKey = agent?.type?.toLowerCase().replace(/\s+/g, '_').replace('&', '').replace('intelligence', '').replace('generation', '').replace('content', '').trim();
+  const agentType = AGENT_TYPES[agentTypeKey as keyof typeof AGENT_TYPES] || AGENT_TYPES.ceo;
+
+  // Create breadcrumbs
+  const breadcrumbs = [
+    { label: "CEO Dashboard", href: "/dashboard/ceo" },
+    { label: "AI Agents", href: "/dashboard/ceo/agents" },
+    { label: `Edit ${agent?.name || 'Agent'}` }
+  ];
+
+  // Create header actions
+  const headerActions = [
+    {
+      label: "View Analytics",
+      onClick: () => router.push(`/dashboard/ceo/agents/analytics`),
+      icon: BarChart3,
+      variant: "outline" as const
+    },
+    {
+      label: "Start Chat",
+      onClick: () => router.push(`/dashboard/ceo/chat?agent=${agentId}`),
+      icon: MessageSquare,
+      variant: "outline" as const
+    },
+    {
+      label: "Delete Agent",
+      onClick: handleDelete,
+      icon: Trash2,
+      variant: "destructive" as const
+    }
+  ];
+
   if (isLoading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading agent...</span>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading agent...</span>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (!agent) {
     return (
-      <AppLayout>
-        <div className="text-center py-16">
-          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Agent Not Found</h2>
-          <p className="text-muted-foreground mb-4">The requested agent could not be found.</p>
-          <Button onClick={() => router.push('/dashboard/ceo/agents')}>
-            Back to Agents
-          </Button>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">Agent Not Found</h3>
+          <p className="text-muted-foreground mb-4">The agent you're looking for doesn't exist.</p>
+          <Link href="/dashboard/ceo/agents">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Agents
+            </Button>
+          </Link>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
-  const agentTypeConfig = AGENT_TYPES[agent.type as keyof typeof AGENT_TYPES];
+  // Prepare performance stat cards
+  const performanceStats = [
+    {
+      title: "Success Rate",
+      value: `${agent.performance.successRate}%`,
+      icon: Target,
+      trend: { value: Math.abs(agent.trends.successRate.value), isPositive: agent.trends.successRate.direction === 'up', period: "vs last month" }
+    },
+    {
+      title: "Efficiency",
+      value: `${agent.performance.efficiency}%`,
+      icon: Zap,
+      trend: { value: Math.abs(agent.trends.efficiency.value), isPositive: agent.trends.efficiency.direction === 'up', period: "vs last month" }
+    },
+    {
+      title: "Tasks Completed",
+      value: agent.performance.tasksCompleted.toString(),
+      icon: CheckCircle,
+    },
+    {
+      title: "Business Impact",
+      value: `${agent.performance.businessImpact}/10`,
+      icon: TrendingUp,
+      trend: { value: Math.abs(agent.trends.businessImpact.value), isPositive: agent.trends.businessImpact.direction === 'up', period: "vs last month" }
+    },
+    {
+      title: "Revenue Generated",
+      value: `$${(agent.performance.revenueGenerated / 1000).toFixed(0)}K`,
+      icon: DollarSign,
+    },
+    {
+      title: "Avg Response Time",
+      value: `${agent.performance.avgResponseTime}h`,
+      icon: Clock,
+      trend: { value: Math.abs(agent.trends.responseTime.value), isPositive: agent.trends.responseTime.direction === 'down', period: "vs last month" }
+    }
+  ];
 
-  return (
-    <AppLayout>
-      <PageHeader
-        items={[
-          { label: "CEO Dashboard", href: "/dashboard/ceo" },
-          { label: "AI Agents", href: "/dashboard/ceo/agents" },
-          { label: agent.name, href: `/dashboard/ceo/agents/${agentId}` },
-          { label: "Edit", isCurrentPage: true },
-        ]}
-      />
-      
-      <main className="p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Edit3 className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Edit Agent</h1>
-              </div>
-              <p className="text-muted-foreground">
-                Modify configuration and settings for {agent.name}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => router.push('/dashboard/ceo/agents')}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Validation Errors */}
-        {validationErrors.length > 0 && (
-          <Alert className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <ul className="list-disc list-inside space-y-1">
-                {validationErrors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Form */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {agentTypeConfig && <agentTypeConfig.icon className="h-5 w-5" />}
-                  Agent Configuration
-                </CardTitle>
-                <CardDescription>
-                  Update basic settings and configuration for this agent
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Agent Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter agent name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Agent Type</Label>
-                    <div className="flex items-center gap-2 p-2 bg-muted rounded">
-                      <span className="text-lg">{agentTypeConfig?.emoji}</span>
-                      <span className="font-medium">{agentTypeConfig?.name}</span>
-                      <Badge variant="secondary">Read-only</Badge>
-                    </div>
-                  </div>
+  // Create tabs for different sections
+  const tabs = [
+    {
+      id: "configuration",
+      label: "Configuration",
+      icon: Settings,
+      content: (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+              <CardDescription>Configure the agent's basic settings and capabilities</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Agent Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter agent name"
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization *</Label>
-                  <Select 
-                    value={formData.specialization} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, specialization: value }))}
-                  >
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={handleStatusChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a specialization" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {agentTypeConfig?.specializations.map(spec => (
-                        <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="specialization">Primary Specialization</Label>
+                  <Select value={formData.specialization} onValueChange={(value) => setFormData({ ...formData, specialization: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select specialization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agentType.specializations.map((spec) => (
+                        <SelectItem key={spec} value={spec}>
+                          {spec}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="model">AI Model *</Label>
-                    <Select 
-                      value={formData.model} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, model: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {agentTypeConfig?.models.map(model => (
-                          <SelectItem key={model} value={model}>{model}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="maxTasks">Max Concurrent Tasks</Label>
-                    <Input
-                      id="maxTasks"
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={formData.maxConcurrentTasks}
-                      onChange={(e) => setFormData(prev => ({ 
-                        ...prev, 
-                        maxConcurrentTasks: parseInt(e.target.value) || 1 
-                      }))}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="model">AI Model</Label>
+                  <Select value={formData.model} onValueChange={(value) => setFormData({ ...formData, model: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select AI model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agentType.models.map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maxTasks">Max Concurrent Tasks</Label>
+                  <Input
+                    id="maxTasks"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={formData.maxConcurrentTasks}
+                    onChange={(e) => setFormData({ ...formData, maxConcurrentTasks: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="avatar">Avatar</Label>
+                  <Input
+                    id="avatar"
+                    value={formData.avatar}
+                    onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+                    placeholder="Enter emoji avatar"
+                  />
+                </div>
+              </div>
+
+              {/* Validation Errors */}
+              {validationErrors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <ul className="list-disc list-inside space-y-1">
+                      {validationErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-between pt-4 border-t">
+                <Link href="/dashboard/ceo/agents">
+                  <Button variant="outline">
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </Link>
+                <div className="flex space-x-2">
+                  <Link href={`/dashboard/ceo/chat?agent=${agentId}`}>
+                    <Button variant="outline">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Test Chat
+                    </Button>
+                  </Link>
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? (
                       <>
@@ -446,112 +508,327 @@ export default function EditAgentPage() {
                     )}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Capabilities */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Capabilities</CardTitle>
+              <CardDescription>Core capabilities and specializations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Core Capabilities</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                    {agent.capabilities.map((capability: string, index: number) => (
+                      <div key={index} className="flex items-center space-x-2 p-2 bg-muted/50 rounded-lg">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">{capability}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Specializations</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {agent.specialties.map((specialty: string, index: number) => (
+                      <Badge key={index} variant="secondary">
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    },
+    {
+      id: "performance",
+      label: "Performance",
+      icon: BarChart3,
+      content: (
+        <div className="space-y-6">
+          {/* Performance Overview */}
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {performanceStats.map((stat, index) => (
+              <StatCard key={index} {...stat} />
+            ))}
           </div>
 
-          {/* Status & Quick Actions */}
-          <div className="space-y-6">
+          {/* Detailed Metrics */}
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Power className="h-5 w-5" />
-                  Agent Status
-                </CardTitle>
+                <CardTitle>Performance Metrics</CardTitle>
+                <CardDescription>Current performance indicators</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span>Current Status:</span>
-                  <Badge className={getStatusColor(formData.status)}>
-                    {formData.status}
-                  </Badge>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Change Status</Label>
-                  <Select value={formData.status} onValueChange={handleStatusChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                      <SelectItem value="busy">Busy</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <ProgressMetric
+                  label="Success Rate"
+                  value={agent.performance.successRate}
+                  progress={agent.performance.successRate}
+                  unit="%"
+                  variant={agent.performance.successRate >= 90 ? 'success' : agent.performance.successRate >= 75 ? 'warning' : 'danger'}
+                />
+                <ProgressMetric
+                  label="Efficiency"
+                  value={agent.performance.efficiency}
+                  progress={agent.performance.efficiency}
+                  unit="%"
+                  variant={agent.performance.efficiency >= 90 ? 'success' : agent.performance.efficiency >= 75 ? 'warning' : 'danger'}
+                />
+                <ProgressMetric
+                  label="Utilization Rate"
+                  value={agent.performance.utilizationRate}
+                  progress={agent.performance.utilizationRate}
+                  unit="%"
+                  variant={agent.performance.utilizationRate >= 80 ? 'success' : agent.performance.utilizationRate >= 60 ? 'warning' : 'danger'}
+                />
+                <ProgressMetric
+                  label="Quality Score"
+                  value={agent.performance.qualityScore}
+                  progress={agent.performance.qualityScore * 10}
+                  unit="/10"
+                  variant={agent.performance.qualityScore >= 8 ? 'success' : agent.performance.qualityScore >= 6 ? 'warning' : 'danger'}
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Agent Information</CardTitle>
+                <CardTitle>Recent Trends</CardTitle>
+                <CardDescription>Performance changes over time</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created:</span>
-                  <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Success Rate:</span>
+                    <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.successRate.direction)}`}>
+                      {getTrendIcon(agent.trends.successRate.direction)}
+                      <span className="font-medium">{Math.abs(agent.trends.successRate.value)}%</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Efficiency:</span>
+                    <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.efficiency.direction)}`}>
+                      {getTrendIcon(agent.trends.efficiency.direction)}
+                      <span className="font-medium">{Math.abs(agent.trends.efficiency.value)}%</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Business Impact:</span>
+                    <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.businessImpact.direction)}`}>
+                      {getTrendIcon(agent.trends.businessImpact.direction)}
+                      <span className="font-medium">{Math.abs(agent.trends.businessImpact.value)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Response Time:</span>
+                    <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.responseTime.direction)}`}>
+                      {getTrendIcon(agent.trends.responseTime.direction)}
+                      <span className="font-medium">{Math.abs(agent.trends.responseTime.value)}h</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Updated:</span>
-                  <span>{new Date(agent.updatedAt).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Tasks:</span>
-                  <span>{agent.totalTasks || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Success Rate:</span>
-                  <span>{agent.successRate || 0}%</span>
+                
+                <div className="pt-4 border-t">
+                  <Link href="/dashboard/ceo/agents/analytics" className="block">
+                    <Button variant="outline" className="w-full">
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Full Analytics
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
 
-        {/* Delete Confirmation Dialog */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
-                  <AlertCircle className="h-5 w-5" />
-                  Delete Agent
-                </CardTitle>
-                <CardDescription>
-                  This action cannot be undone. This will permanently delete the agent and cancel all active tasks.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete Agent'
-                    )}
-                  </Button>
+          {/* Recent Tasks */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Tasks</CardTitle>
+              <CardDescription>Latest completed and ongoing tasks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {agent.recentTasks.map((task: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">{task.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Duration: {task.duration}h • Impact: {task.impact}/10
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={task.completion === 100 ? "default" : "secondary"}>
+                        {task.completion}%
+                      </Badge>
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3 w-3 ${i < Math.floor(task.impact)
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-300"}`} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    },
+    {
+      id: "chat_history",
+      label: "Chat History",
+      icon: MessageSquare,
+      content: (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Conversations</CardTitle>
+              <CardDescription>Chat history and interactions with this agent</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const agentChats = getAgentChats(agentId);
+                
+                if (agentChats.length === 0) {
+                  return (
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No Conversations Yet</h3>
+                      <p className="text-muted-foreground mb-4">Start a conversation with this agent to see chat history here.</p>
+                      <Link href={`/dashboard/ceo/chat?agent=${agentId}`}>
+                        <Button>
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Start Chat
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {agentChats.map((chat) => (
+                      <div key={chat.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium">{chat.title}</h4>
+                          <Badge variant="secondary">{chat.messages.length} messages</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Last updated: {new Date(chat.updatedAt).toLocaleDateString()}
+                        </p>
+                        {chat.messages.length > 0 && (
+                          <div className="text-sm bg-muted/30 p-2 rounded">
+                            <span className="font-medium">Last message:</span> {chat.messages[chat.messages.length - 1].content.substring(0, 100)}...
+                          </div>
+                        )}
+                        <div className="flex justify-end mt-3">
+                          <Link href={`/dashboard/ceo/chat?agent=${agentId}&chat=${chat.id}`}>
+                            <Button size="sm" variant="outline">
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Continue Chat
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="pt-4 border-t">
+                      <Link href={`/dashboard/ceo/chat?agent=${agentId}`} className="block">
+                        <Button className="w-full">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Start New Conversation
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+      {/* Page Header */}
+      <PageHeaderWithActions
+        title={`Edit ${agent.name}`}
+        description={`Configure and manage your ${agent.type} agent`}
+        breadcrumbs={breadcrumbs}
+        actions={headerActions}
+        icon={Edit3}
+        className="mb-6"
+      />
+
+      {/* Agent Overview */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">{agent.avatar}</div>
+              <div>
+                <h2 className="text-2xl font-bold">{agent.name}</h2>
+                <p className="text-muted-foreground">{agent.description}</p>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Badge variant="secondary">{agent.type}</Badge>
+                  <Badge variant="outline">{agent.model}</Badge>
+                  <Badge className={getStatusColor(agent.status)}>
+                    {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
+                  </Badge>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary">{agent.performance.tasksCompleted}</p>
+                <p className="text-xs text-muted-foreground">Tasks Completed</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${i < Math.floor(agent.performance.clientSatisfaction)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"}`} />
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Client Rating</p>
+              </div>
+            </div>
           </div>
-        )}
-      </main>
-    </AppLayout>
+        </CardContent>
+      </Card>
+
+      {/* Configuration Tabs */}
+      <TabbedContentLayout
+        tabs={tabs}
+        defaultTab="configuration"
+        className="space-y-4 sm:space-y-6"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmation
+        isOpen={isDeleteOpen}
+        onClose={closeDelete}
+        onConfirm={handleDeleteConfirm}
+        {...deleteConfig}
+      />
+    </main>
   );
 } 

@@ -2,6 +2,7 @@ import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPaletteProvider } from "@/providers/command-palette-provider";
+import { AgentProvider } from "@/lib/agents/agent-context";
 import { siteConfig } from "@/lib/config";
 import { cn, constructMetadata } from "@/lib/utils";
 import { GeistMono } from "geist/font/mono";
@@ -45,10 +46,12 @@ export default function RootLayout({
           enableSystem={false}
         >
           <CommandPaletteProvider>
-            {children}
-            <ThemeToggle />
-            <TailwindIndicator />
-            <Toaster position="bottom-right" richColors closeButton />
+            <AgentProvider>
+              {children}
+              <ThemeToggle />
+              <TailwindIndicator />
+              <Toaster position="bottom-right" richColors closeButton />
+            </AgentProvider>
           </CommandPaletteProvider>
         </ThemeProvider>
       </body>

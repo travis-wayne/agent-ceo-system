@@ -71,6 +71,8 @@ import {
   Filter,
 } from "lucide-react";
 
+import { useAgent } from "@/lib/agents/agent-context";
+
 // Helper functions
 function getAgentEmoji(type: string): string {
   const emojiMap: Record<string, string> = {
@@ -125,9 +127,10 @@ function getAgentCapabilities(type: string): string[] {
 }
 
 export default function AgentManagementPage() {
-  const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const { agents, isLoading, refreshAgents, setSelectedAgent, updateAgent, deleteAgent } = useAgent();
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isConfigureAllOpen, setIsConfigureAllOpen] = useState(false);
+  const [selectedAgentForModal, setSelectedAgentForModal] = useState<any>(null);
   
   // Delete confirmation hook
   const { isOpen: isDeleteOpen, confirmDelete, closeDelete, deleteConfig } = useDeleteConfirmation();
@@ -143,14 +146,14 @@ export default function AgentManagementPage() {
   };
 
   const handleViewDetails = (agent: any) => {
+    setSelectedAgentForModal(agent);
     setSelectedAgent(agent);
     setIsDetailsModalOpen(true);
   };
 
-
-
   const handleEditAgent = (agent: any) => {
-    toast.info(`Edit functionality for ${agent.name} - Coming soon!`);
+    setSelectedAgent(agent);
+    window.location.href = `/dashboard/ceo/agents/edit/${agent.id}`;
   };
 
   const handleDuplicateAgent = (agent: any) => {
@@ -173,18 +176,26 @@ export default function AgentManagementPage() {
   };
 
   const handleDeleteConfirm = async () => {
-    toast.success(`${deleteConfig.itemName} deleted successfully`);
+    if (deleteConfig.itemName) {
+      const agent = agents.find(a => a.name === deleteConfig.itemName);
+      if (agent) {
+        await deleteAgent(agent.id);
+      }
+    }
   };
 
-  const handleRestartAgent = (agent: any) => {
+  const handleRestartAgent = async (agent: any) => {
+    await updateAgent(agent.id, { status: 'active' });
     toast.success(`${agent.name} restarted successfully`);
   };
 
-  const handlePauseAgent = (agent: any) => {
+  const handlePauseAgent = async (agent: any) => {
+    await updateAgent(agent.id, { status: 'inactive' });
     toast.success(`${agent.name} paused successfully`);
   };
 
-  const handleResumeAgent = (agent: any) => {
+  const handleResumeAgent = async (agent: any) => {
+    await updateAgent(agent.id, { status: 'active' });
     toast.success(`${agent.name} resumed successfully`);
   };
 
@@ -193,7 +204,8 @@ export default function AgentManagementPage() {
   };
 
   const handleViewAnalytics = (agent: any) => {
-    toast.info(`Viewing analytics for ${agent.name} - Coming soon!`);
+    setSelectedAgent(agent);
+    window.location.href = `/dashboard/ceo/agents/analytics`;
   };
 
   // Create breadcrumbs
@@ -611,33 +623,33 @@ export default function AgentManagementPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-lg">{selectedAgent?.avatar}</AvatarFallback>
+                <AvatarFallback className="text-lg">{selectedAgentForModal?.avatar}</AvatarFallback>
               </Avatar>
               <div>
-                <div>{selectedAgent?.name}</div>
-                <div className="text-sm font-normal text-muted-foreground">{selectedAgent?.description}</div>
+                <div>{selectedAgentForModal?.name}</div>
+                <div className="text-sm font-normal text-muted-foreground">{selectedAgentForModal?.description}</div>
               </div>
             </DialogTitle>
           </DialogHeader>
           
-          {selectedAgent && (
+          {selectedAgentForModal && (
             <div className="space-y-6">
               {/* Status and Quick Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-primary">{selectedAgent.currentTasks}</p>
+                  <p className="text-2xl font-bold text-primary">{selectedAgentForModal.currentTasks}</p>
                   <p className="text-sm text-muted-foreground">Active Tasks</p>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-600">{selectedAgent.successRate}%</p>
+                  <p className="text-2xl font-bold text-green-600">{selectedAgentForModal.successRate}%</p>
                   <p className="text-sm text-muted-foreground">Success Rate</p>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-600">{selectedAgent.efficiency}%</p>
+                  <p className="text-2xl font-bold text-blue-600">{selectedAgentForModal.efficiency}%</p>
                   <p className="text-sm text-muted-foreground">Efficiency</p>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-purple-600">${selectedAgent.totalRevenue.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-purple-600">${selectedAgentForModal.totalRevenue.toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
                 </div>
               </div>
@@ -646,7 +658,7 @@ export default function AgentManagementPage() {
               <div>
                 <h4 className="font-medium mb-3">Core Capabilities</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {selectedAgent.capabilities.map((capability: string, index: number) => (
+                  {selectedAgentForModal.capabilities.map((capability: string, index: number) => (
                     <div key={index} className="flex items-center space-x-2 p-2 bg-muted/50 rounded-lg">
                       <CheckCircle className="h-4 w-4 text-green-500" />
                       <span className="text-sm">{capability}</span>
@@ -663,23 +675,23 @@ export default function AgentManagementPage() {
                     <div>
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span>Efficiency</span>
-                        <span className="font-medium">{selectedAgent.efficiency}%</span>
+                        <span className="font-medium">{selectedAgentForModal.efficiency}%</span>
                       </div>
-                      <Progress value={selectedAgent.efficiency} />
+                      <Progress value={selectedAgentForModal.efficiency} />
                     </div>
                     <div>
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span>Utilization Rate</span>
-                        <span className="font-medium">{selectedAgent.utilizationRate}%</span>
+                        <span className="font-medium">{selectedAgentForModal.utilizationRate}%</span>
                       </div>
-                      <Progress value={selectedAgent.utilizationRate} />
+                      <Progress value={selectedAgentForModal.utilizationRate} />
                     </div>
                     <div>
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span>Success Rate</span>
-                        <span className="font-medium">{selectedAgent.successRate}%</span>
+                        <span className="font-medium">{selectedAgentForModal.successRate}%</span>
                       </div>
-                      <Progress value={selectedAgent.successRate} />
+                      <Progress value={selectedAgentForModal.successRate} />
                     </div>
                   </div>
                 </div>
@@ -689,24 +701,24 @@ export default function AgentManagementPage() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span>Total Revenue:</span>
-                      <span className="font-medium">${selectedAgent.totalRevenue.toLocaleString()}</span>
+                      <span className="font-medium">${selectedAgentForModal.totalRevenue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Cost per Hour:</span>
-                      <span className="font-medium">${selectedAgent.costPerHour}</span>
+                      <span className="font-medium">${selectedAgentForModal.costPerHour}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Completed Tasks:</span>
-                      <span className="font-medium">{selectedAgent.completedTasks}</span>
+                      <span className="font-medium">{selectedAgentForModal.completedTasks}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Average Response Time:</span>
-                      <span className="font-medium">{selectedAgent.avgResponseTime}</span>
+                      <span className="font-medium">{selectedAgentForModal.avgResponseTime}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>ROI:</span>
                       <span className="font-medium text-green-600">
-                        {((selectedAgent.totalRevenue / (selectedAgent.costPerHour * selectedAgent.completedTasks * 5)) * 100).toFixed(0)}%
+                        {((selectedAgentForModal.totalRevenue / (selectedAgentForModal.costPerHour * selectedAgentForModal.completedTasks * 5)) * 100).toFixed(0)}%
                       </span>
                     </div>
                   </div>
@@ -717,7 +729,7 @@ export default function AgentManagementPage() {
               <div>
                 <h4 className="font-medium mb-3">Recent Activity</h4>
                 <div className="space-y-3">
-                  {selectedAgent.recentActivity.map((activity: any, index: number) => (
+                  {selectedAgentForModal.recentActivity.map((activity: any, index: number) => (
                     <div key={index} className="flex items-start space-x-3 p-3 bg-muted/50 rounded-lg">
                       {getActivityIcon(activity.type)}
                       <div className="flex-1">
@@ -733,7 +745,7 @@ export default function AgentManagementPage() {
               <div>
                 <h4 className="font-medium mb-3">Specialties</h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedAgent.specialties.map((specialty: string, index: number) => (
+                  {selectedAgentForModal.specialties.map((specialty: string, index: number) => (
                     <Badge key={index} variant="secondary">
                       {specialty}
                     </Badge>
