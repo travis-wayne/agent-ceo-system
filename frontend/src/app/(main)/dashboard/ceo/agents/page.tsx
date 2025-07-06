@@ -147,12 +147,12 @@ export default function AgentManagementPage() {
 
   const handleViewDetails = (agent: any) => {
     setSelectedAgentForModal(agent);
-    setSelectedAgent(agent);
+    setSelectedAgent(agents.find(a => a.id === agent.id) || null);
     setIsDetailsModalOpen(true);
   };
 
   const handleEditAgent = (agent: any) => {
-    setSelectedAgent(agent);
+    setSelectedAgent(agents.find(a => a.id === agent.id) || null);
     window.location.href = `/dashboard/ceo/agents/edit/${agent.id}`;
   };
 
@@ -185,18 +185,27 @@ export default function AgentManagementPage() {
   };
 
   const handleRestartAgent = async (agent: any) => {
-    await updateAgent(agent.id, { status: 'active' });
-    toast.success(`${agent.name} restarted successfully`);
+    const contextAgent = agents.find(a => a.id === agent.id);
+    if (contextAgent) {
+      await updateAgent(contextAgent.id, { status: 'active' });
+      toast.success(`${agent.name} restarted successfully`);
+    }
   };
 
   const handlePauseAgent = async (agent: any) => {
-    await updateAgent(agent.id, { status: 'inactive' });
-    toast.success(`${agent.name} paused successfully`);
+    const contextAgent = agents.find(a => a.id === agent.id);
+    if (contextAgent) {
+      await updateAgent(contextAgent.id, { status: 'inactive' });
+      toast.success(`${agent.name} paused successfully`);
+    }
   };
 
   const handleResumeAgent = async (agent: any) => {
-    await updateAgent(agent.id, { status: 'active' });
-    toast.success(`${agent.name} resumed successfully`);
+    const contextAgent = agents.find(a => a.id === agent.id);
+    if (contextAgent) {
+      await updateAgent(contextAgent.id, { status: 'active' });
+      toast.success(`${agent.name} resumed successfully`);
+    }
   };
 
   const handleViewLogs = (agent: any) => {
@@ -204,7 +213,7 @@ export default function AgentManagementPage() {
   };
 
   const handleViewAnalytics = (agent: any) => {
-    setSelectedAgent(agent);
+    setSelectedAgent(agents.find(a => a.id === agent.id) || null);
     window.location.href = `/dashboard/ceo/agents/analytics`;
   };
 
@@ -236,95 +245,35 @@ export default function AgentManagementPage() {
     }
   ];
 
-  // Mock AI Agents data
-  const aiAgents = [
-    {
-      id: "ceo_agent",
-      name: "CEO Agent",
-      avatar: "🧠",
-      status: "active",
-      description: "Strategic planning, market analysis, and business intelligence",
-      capabilities: getAgentCapabilities("ceo"),
-      currentTasks: 8,
-      completedTasks: 147,
-      successRate: 94.8,
-      avgResponseTime: "4.2 hours",
-      costPerHour: 285,
-      totalRevenue: 52340,
-      efficiency: 96,
-      utilizationRate: 87,
-      specialties: ["Strategic Decision Making", "Market Research", "Business Development"],
-      recentActivity: [
-        { action: "Completed Market Analysis for Q4 2024", timestamp: "2 hours ago", type: "completion" },
-        { action: "Started Competitive Intelligence Report", timestamp: "5 hours ago", type: "start" },
-        { action: "Updated Business Model Canvas", timestamp: "1 day ago", type: "update" }
-      ],
-      metrics: {
-        tasksThisWeek: 12,
-        avgBusinessImpact: 9.2,
-        clientSatisfaction: 4.9,
-        knowledgeBase: 2847
-      }
-    },
-    {
-      id: "sales_agent",
-      name: "Sales Agent", 
-      avatar: "💼",
-      status: "active",
-      description: "Lead generation, sales optimization, and revenue growth",
-      capabilities: getAgentCapabilities("sales"),
-      currentTasks: 15,
-      completedTasks: 203,
-      successRate: 96.2,
-      avgResponseTime: "2.8 hours",
-      costPerHour: 195,
-      totalRevenue: 78450,
-      efficiency: 94,
-      utilizationRate: 92,
-      specialties: ["Pipeline Management", "Conversion Optimization", "Customer Outreach"],
-      recentActivity: [
-        { action: "Generated 47 qualified leads", timestamp: "1 hour ago", type: "completion" },
-        { action: "Optimized sales funnel conversion", timestamp: "3 hours ago", type: "optimization" },
-        { action: "Updated CRM automation workflows", timestamp: "6 hours ago", type: "update" }
-      ],
-      metrics: {
-        tasksThisWeek: 18,
-        avgBusinessImpact: 8.9,
-        clientSatisfaction: 4.8,
-        knowledgeBase: 1923
-      }
-    },
-    {
-      id: "marketing_agent",
-      name: "Marketing Agent",
-      avatar: "🎨", 
-      status: "active",
-      description: "Content creation, brand strategy, and digital marketing",
-      capabilities: getAgentCapabilities("marketing"),
-      currentTasks: 11,
-      completedTasks: 178,
-      successRate: 91.7,
-      avgResponseTime: "3.5 hours",
-      costPerHour: 165,
-      totalRevenue: 45230,
-      efficiency: 89,
-      utilizationRate: 85,
-      specialties: ["Brand Building", "Content Marketing", "Campaign Management"],
-      recentActivity: [
-        { action: "Published Q4 content calendar", timestamp: "30 minutes ago", type: "completion" },
-        { action: "Launched social media campaign", timestamp: "4 hours ago", type: "launch" },
-        { action: "Created brand guidelines document", timestamp: "1 day ago", type: "creation" }
-      ],
-      metrics: {
-        tasksThisWeek: 14,
-        avgBusinessImpact: 8.4,
-        clientSatisfaction: 4.7,
-        knowledgeBase: 1654
-      }
+  // Transform agents from context to match the expected format for the UI
+  const aiAgents = agents.map(agent => ({
+    id: agent.id,
+    name: agent.name,
+    avatar: agent.avatar,
+    status: agent.status,
+    description: agent.description,
+    capabilities: agent.capabilities,
+    currentTasks: Math.floor(Math.random() * 20) + 5, // Random current tasks for demo
+    completedTasks: agent.performance.tasksCompleted,
+    successRate: agent.performance.successRate,
+    avgResponseTime: `${agent.performance.avgResponseTime} hours`,
+    costPerHour: agent.performance.costPerHour,
+    totalRevenue: agent.performance.revenueGenerated,
+    efficiency: agent.performance.efficiency,
+    utilizationRate: agent.performance.utilizationRate,
+    specialties: agent.specialties,
+    recentActivity: agent.recentTasks.map(task => ({
+      action: task.name,
+      timestamp: `${Math.floor(Math.random() * 24)} hours ago`,
+      type: task.completion === 100 ? "completion" : "start"
+    })),
+    metrics: {
+      tasksThisWeek: Math.floor(Math.random() * 20) + 5,
+      avgBusinessImpact: agent.performance.businessImpact,
+      clientSatisfaction: agent.performance.clientSatisfaction,
+      knowledgeBase: Math.floor(Math.random() * 3000) + 1000
     }
-  ];
-
-
+  }));
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -614,8 +563,6 @@ export default function AgentManagementPage() {
           </CardContent>
         </Card>
       </main>
-
-
 
       {/* Agent Details Modal */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>

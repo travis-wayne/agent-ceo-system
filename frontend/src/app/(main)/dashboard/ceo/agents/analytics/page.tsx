@@ -551,21 +551,20 @@ export default function AgentAnalyticsPage() {
                             <div className="text-lg">{agent.avatar}</div>
                             <span className="font-medium">{agent.name}</span>
                           </div>
-                            <Link href={`/dashboard/ceo/agents/edit/${agent.id}`}>
-                              <Button size="sm" variant="outline">
-                                <Settings className="h-4 w-4 mr-2" />
-                                Optimize
-                              </Button>
-                            </Link>
-                          </div>
-                          <div className="space-y-1 text-sm">
-                            {agent.performance.efficiency < 90 && (
-                              <p className="text-orange-600">• Efficiency below 90% ({agent.performance.efficiency}%)</p>
-                            )}
-                            {agent.performance.utilizationRate < 80 && (
-                              <p className="text-orange-600">• Low utilization ({agent.performance.utilizationRate}%)</p>
-                            )}
-                          </div>
+                          <Link href={`/dashboard/ceo/agents/edit/${agent.id}`}>
+                            <Button size="sm" variant="outline">
+                              <Settings className="h-4 w-4 mr-2" />
+                              Optimize
+                            </Button>
+                          </Link>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          {agent.performance.efficiency < 90 && (
+                            <p className="text-orange-600">• Efficiency below 90% ({agent.performance.efficiency}%)</p>
+                          )}
+                          {agent.performance.utilizationRate < 80 && (
+                            <p className="text-orange-600">• Low utilization ({agent.performance.utilizationRate}%)</p>
+                          )}
                         </div>
                       </div>
                     ))}

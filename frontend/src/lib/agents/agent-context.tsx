@@ -226,6 +226,92 @@ const mockAgents: Agent[] = [
     ],
     createdAt: "2024-02-01T11:00:00Z",
     updatedAt: "2024-03-15T12:20:00Z"
+  },
+  {
+    id: "operations_agent",
+    name: "Operations Agent",
+    type: "Process Optimization",
+    avatar: "⚙️",
+    status: "maintenance",
+    description: "Process automation, workflow optimization, and operational efficiency",
+    capabilities: [
+      "Process Automation & Optimization",
+      "Quality Management Systems",
+      "Resource Allocation & Planning",
+      "Cost Reduction Strategies",
+      "Operational Risk Management"
+    ],
+    specialties: ["Process Improvement", "Automation", "Efficiency Optimization"],
+    model: "GPT-4 Turbo",
+    maxConcurrentTasks: 4,
+    performance: {
+      successRate: 93.5,
+      efficiency: 91.0,
+      tasksCompleted: 98,
+      avgResponseTime: 5.1,
+      businessImpact: 8.7,
+      costPerHour: 215,
+      revenueGenerated: 34870,
+      utilizationRate: 73,
+      qualityScore: 8.9,
+      clientSatisfaction: 4.6
+    },
+    trends: {
+      successRate: { value: -0.5, direction: "down" },
+      efficiency: { value: 0.3, direction: "up" },
+      businessImpact: { value: 0.2, direction: "up" },
+      responseTime: { value: 0.8, direction: "up" }
+    },
+    recentTasks: [
+      { name: "Workflow Optimization", completion: 85, impact: 9.2, duration: 4.8 },
+      { name: "System Maintenance", completion: 100, impact: 7.5, duration: 6.2 },
+      { name: "Process Automation", completion: 75, impact: 8.8, duration: 5.5 }
+    ],
+    createdAt: "2024-01-25T14:00:00Z",
+    updatedAt: "2024-03-15T09:30:00Z"
+  },
+  {
+    id: "analytics_agent",
+    name: "Analytics Agent",
+    type: "Data Intelligence",
+    avatar: "📊",
+    status: "active",
+    description: "Data analysis, business intelligence, and predictive insights",
+    capabilities: [
+      "Data Processing & Analysis",
+      "Business Intelligence Reporting",
+      "Predictive Analytics",
+      "Performance Metrics Tracking",
+      "Trend Analysis & Forecasting"
+    ],
+    specialties: ["Data Analysis", "Predictive Modeling", "Business Intelligence"],
+    model: "Claude-3 Opus",
+    maxConcurrentTasks: 7,
+    performance: {
+      successRate: 97.1,
+      efficiency: 92.0,
+      tasksCompleted: 156,
+      avgResponseTime: 3.8,
+      businessImpact: 8.8,
+      costPerHour: 175,
+      revenueGenerated: 20970,
+      utilizationRate: 88,
+      qualityScore: 9.3,
+      clientSatisfaction: 4.8
+    },
+    trends: {
+      successRate: { value: 1.8, direction: "up" },
+      efficiency: { value: 2.1, direction: "up" },
+      businessImpact: { value: 0.6, direction: "up" },
+      responseTime: { value: -0.4, direction: "down" }
+    },
+    recentTasks: [
+      { name: "Revenue Forecasting Model", completion: 100, impact: 9.5, duration: 3.1 },
+      { name: "Customer Behavior Analysis", completion: 95, impact: 8.9, duration: 4.2 },
+      { name: "Performance Dashboard", completion: 100, impact: 8.6, duration: 2.8 }
+    ],
+    createdAt: "2024-02-05T16:30:00Z",
+    updatedAt: "2024-03-15T18:15:00Z"
   }
 ];
 
@@ -283,6 +369,60 @@ const mockChats: AgentChat[] = [
     ],
     createdAt: "2024-03-15T14:00:00Z",
     updatedAt: "2024-03-15T14:01:00Z"
+  },
+  {
+    id: "chat_3",
+    agentId: "operations_agent",
+    title: "Process Optimization Discussion",
+    messages: [
+      {
+        id: "msg_5",
+        agentId: "operations_agent",
+        role: "user",
+        content: "How can we improve our current workflow efficiency?",
+        timestamp: "2024-03-15T16:00:00Z"
+      },
+      {
+        id: "msg_6",
+        agentId: "operations_agent",
+        role: "assistant",
+        content: "I've analyzed your current workflow and identified several optimization opportunities...",
+        timestamp: "2024-03-15T16:01:00Z",
+        metadata: {
+          confidence: 0.88,
+          sources: ["Process Analytics", "Workflow Data"]
+        }
+      }
+    ],
+    createdAt: "2024-03-15T16:00:00Z",
+    updatedAt: "2024-03-15T16:01:00Z"
+  },
+  {
+    id: "chat_4",
+    agentId: "analytics_agent",
+    title: "Data Insights Review",
+    messages: [
+      {
+        id: "msg_7",
+        agentId: "analytics_agent",
+        role: "user",
+        content: "Can you provide insights on our Q4 performance metrics?",
+        timestamp: "2024-03-15T18:00:00Z"
+      },
+      {
+        id: "msg_8",
+        agentId: "analytics_agent",
+        role: "assistant",
+        content: "Based on Q4 data analysis, here are the key performance insights and trends...",
+        timestamp: "2024-03-15T18:01:00Z",
+        metadata: {
+          confidence: 0.96,
+          sources: ["Performance Database", "Historical Trends"]
+        }
+      }
+    ],
+    createdAt: "2024-03-15T18:00:00Z",
+    updatedAt: "2024-03-15T18:01:00Z"
   }
 ];
 
