@@ -50,10 +50,40 @@ import {
 import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
 import { StatCard } from "@/components/ui/stat-card";
 import { ActionButtonGroup } from "@/components/ui/action-button-group";
-import { SocialMediaProvider, useSocialMedia } from "@/lib/contexts/social-media-context";
+
+// Helper function for status badges
+const getStatusBadge = (status: string) => {
+  const statusConfig = {
+    connected: { color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", label: "Connected" },
+    pending: { color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200", label: "Pending" },
+    disconnected: { color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", label: "Disconnected" },
+    error: { color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", label: "Error" },
+    draft: { color: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200", label: "Draft" },
+    scheduled: { color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200", label: "Scheduled" },
+    published: { color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", label: "Published" },
+    failed: { color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", label: "Failed" },
+    active: { color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", label: "Active" },
+    paused: { color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200", label: "Paused" },
+    completed: { color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200", label: "Completed" },
+    generated: { color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200", label: "Generated" }
+  };
+  
+  return statusConfig[status as keyof typeof statusConfig] || { color: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200", label: status };
+};
+
+// Helper function to format date and time
+const formatDateTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+};
 
 function ContentGeneratorContent() {
-  const { campaigns, refreshData, isLoading } = useSocialMedia();
+  const { campaigns, refreshCampaigns, isLoading } = useSocial();
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [generationSettings, setGenerationSettings] = useState({
     platform: "LinkedIn",
@@ -203,15 +233,15 @@ function ContentGeneratorContent() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Content copied to clipboard');
+    toast.success("Content copied to clipboard");
   };
 
   return (
     <>
       <div className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
         <PageHeaderWithActions
-          title="Content Generator"
-          description="AI-powered social media content generation and optimization for all platforms"
+          title="AI Content Generator"
+          description="Generate engaging social media content with AI assistance"
           breadcrumbs={[
             { label: "CEO Dashboard", href: "/dashboard/ceo" },
             { label: "Social Media", href: "/dashboard/ceo/social" },
@@ -222,46 +252,45 @@ function ContentGeneratorContent() {
       </div>
       
       <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6 space-y-8">
-        {/* Overview Stats */}
+        {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Generated Content"
             value={generatedContent.length.toString()}
             description="AI-created posts"
             icon={Sparkles}
-            trend={{ value: 5, isPositive: true, period: "this week" }}
+            trend={{ value: 3, isPositive: true, period: "this week" }}
           />
           <StatCard
-            title="Templates Available"
-            value={contentTemplates.length.toString()}
-            description="Content templates"
+            title="Active Campaigns"
+            value={campaigns.filter(c => c.status === 'active').length.toString()}
+            description="Running campaigns"
             icon={Target}
           />
           <StatCard
-            title="Success Rate"
-            value="92%"
-            description="Generation success"
-            icon={CheckCircle}
-            trend={{ value: 3, isPositive: true, period: "vs last month" }}
+            title="Content Templates"
+            value={contentTemplates.length.toString()}
+            description="Available templates"
+            icon={Bot}
           />
           <StatCard
-            title="Time Saved"
-            value="24h"
-            description="This month"
-            icon={Clock}
-            trend={{ value: 6, isPositive: true, period: "vs last month" }}
+            title="Generation Success"
+            value="95%"
+            description="Success rate"
+            icon={CheckCircle}
+            trend={{ value: 2, isPositive: true, period: "vs last week" }}
           />
         </div>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-gray-100">
               <Target className="h-5 w-5" />
               Quick Actions
             </CardTitle>
-            <CardDescription>
-              Navigate to related sections for content management
+            <CardDescription className="dark:text-gray-400">
+              Common tasks for content generation
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -270,50 +299,34 @@ function ContentGeneratorContent() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Content Generation */}
-          <Card>
+          {/* Content Generation Form */}
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 dark:text-gray-100">
                 <Sparkles className="h-5 w-5" />
                 Generate New Content
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="dark:text-gray-400">
                 Create AI-powered content for your social media platforms
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Template Selection */}
-              <div>
-                <Label htmlFor="template">Content Template</Label>
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contentTemplates.map(template => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Generation Settings */}
+              {/* Platform and Tone Selection */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="platform">Platform</Label>
                   <Select value={generationSettings.platform} onValueChange={(value) => 
                     setGenerationSettings(prev => ({ ...prev, platform: value }))
                   }>
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                       <SelectItem value="LinkedIn">LinkedIn</SelectItem>
                       <SelectItem value="Twitter/X">Twitter/X</SelectItem>
                       <SelectItem value="Facebook">Facebook</SelectItem>
                       <SelectItem value="Instagram">Instagram</SelectItem>
+                      <SelectItem value="YouTube">YouTube</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -322,29 +335,31 @@ function ContentGeneratorContent() {
                   <Select value={generationSettings.tone} onValueChange={(value) => 
                     setGenerationSettings(prev => ({ ...prev, tone: value }))
                   }>
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                       <SelectItem value="professional">Professional</SelectItem>
                       <SelectItem value="casual">Casual</SelectItem>
                       <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
                       <SelectItem value="friendly">Friendly</SelectItem>
+                      <SelectItem value="authoritative">Authoritative</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
+              {/* Length and Audience */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="length">Content Length</Label>
                   <Select value={generationSettings.length} onValueChange={(value) => 
                     setGenerationSettings(prev => ({ ...prev, length: value }))
                   }>
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                       <SelectItem value="short">Short</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="long">Long</SelectItem>
@@ -356,10 +371,10 @@ function ContentGeneratorContent() {
                   <Select value={generationSettings.targetAudience} onValueChange={(value) => 
                     setGenerationSettings(prev => ({ ...prev, targetAudience: value }))
                   }>
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                       <SelectItem value="business-professionals">Business Professionals</SelectItem>
                       <SelectItem value="general-audience">General Audience</SelectItem>
                       <SelectItem value="tech-enthusiasts">Tech Enthusiasts</SelectItem>
@@ -379,7 +394,7 @@ function ContentGeneratorContent() {
                       setGenerationSettings(prev => ({ ...prev, includeHashtags: checked as boolean }))
                     }
                   />
-                  <Label htmlFor="hashtags">Include hashtags</Label>
+                  <Label htmlFor="hashtags" className="dark:text-gray-300">Include hashtags</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -389,18 +404,18 @@ function ContentGeneratorContent() {
                       setGenerationSettings(prev => ({ ...prev, includeEmojis: checked as boolean }))
                     }
                   />
-                  <Label htmlFor="emojis">Include emojis</Label>
+                  <Label htmlFor="emojis" className="dark:text-gray-300">Include emojis</Label>
                 </div>
               </div>
 
               <Separator />
 
               <div>
-                <Label htmlFor="prompt">Custom Prompt (Optional)</Label>
+                <Label htmlFor="prompt" className="dark:text-gray-300">Custom Prompt (Optional)</Label>
                 <Textarea 
                   id="prompt"
                   placeholder="Enter specific instructions for content generation..."
-                  className="min-h-[100px]"
+                  className="min-h-[100px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -412,31 +427,31 @@ function ContentGeneratorContent() {
           </Card>
 
           {/* Content Templates */}
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 dark:text-gray-100">
                 <Target className="h-5 w-5" />
                 Content Templates
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="dark:text-gray-400">
                 Choose from pre-built templates for different content types
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {contentTemplates.map(template => (
-                  <Card key={template.id} className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  <Card key={template.id} className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors dark:bg-gray-700 dark:border-gray-600"
                         onClick={() => setSelectedTemplate(template.id)}>
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold">{template.name}</h4>
-                      <Badge variant="outline">{template.length}</Badge>
+                      <h4 className="font-semibold dark:text-gray-100">{template.name}</h4>
+                      <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{template.length}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">
                       {template.description}
                     </p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Platforms:</span>
+                        <span className="text-xs text-muted-foreground dark:text-gray-400">Platforms:</span>
                         <div className="flex gap-1">
                           {template.platforms.map(platform => (
                             <div key={platform} className="flex items-center">
@@ -447,7 +462,7 @@ function ContentGeneratorContent() {
                       </div>
                       <div className="flex gap-1">
                         {template.tags.slice(0, 2).map(tag => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge key={tag} variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-300">
                             {tag}
                           </Badge>
                         ))}
@@ -461,81 +476,86 @@ function ContentGeneratorContent() {
         </div>
 
         {/* Generated Content */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-gray-100">
               <Bot className="h-5 w-5" />
               Recently Generated Content
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="dark:text-gray-400">
               Your AI-generated content ready for review and publishing
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {generatedContent.map(content => (
-                <Card key={content.id} className="p-4">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="p-2 rounded-lg bg-green-50">
-                        <Sparkles className="h-5 w-5 text-green-600" />
+              {generatedContent.map(content => {
+                const statusBadge = getStatusBadge(content.status);
+                return (
+                  <Card key={content.id} className="p-4 dark:bg-gray-700 dark:border-gray-600">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900">
+                          <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold dark:text-gray-100">{content.title}</h3>
+                            <Badge className={`text-xs ${statusBadge.color}`}>
+                              {statusBadge.label}
+                            </Badge>
+                            <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{content.type}</Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400 mb-3">
+                            <div className="flex items-center gap-1">
+                              {getPlatformIcon(content.platform)}
+                              <span>{content.platform}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{formatDateTime(content.generatedAt)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Bot className="h-4 w-4" />
+                              <span>{content.agent}</span>
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-600 p-3 rounded-lg mb-3">
+                            <p className="text-sm whitespace-pre-wrap line-clamp-4 dark:text-gray-200">
+                              {content.content}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground dark:text-gray-400">Tags:</span>
+                            <div className="flex gap-1">
+                              {content.hashtags.map(tag => (
+                                <Badge key={tag} variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-300">
+                                  #{tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{content.title}</h3>
-                          {getStatusBadge(content.status)}
-                          <Badge variant="outline">{content.type}</Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1">
-                            {getPlatformIcon(content.platform)}
-                            <span>{content.platform}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{formatDateTime(content.generatedAt)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Bot className="h-4 w-4" />
-                            <span>{content.agent}</span>
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg mb-3">
-                          <p className="text-sm whitespace-pre-wrap line-clamp-4">
-                            {content.content}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Tags:</span>
-                          <div className="flex gap-1">
-                            {content.hashtags.map(tag => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Copy className="h-4 w-4 mr-1" />
-                        Copy
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Link href={`/dashboard/ceo/social/posts?action=create&content=${content.id}`}>
-                        <Button size="sm">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Use
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => copyToClipboard(content.content)} className="dark:border-gray-600 dark:text-gray-300">
+                          <Copy className="h-4 w-4 mr-1" />
+                          Copy
                         </Button>
-                      </Link>
+                        <Button size="sm" variant="outline" className="dark:border-gray-600 dark:text-gray-300">
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Link href={`/dashboard/ceo/social/posts?action=create&content=${content.id}`}>
+                          <Button size="sm" className="dark:bg-blue-600 dark:hover:bg-blue-700">
+                            <Plus className="h-4 w-4 mr-1" />
+                            Use
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -545,9 +565,5 @@ function ContentGeneratorContent() {
 }
 
 export default function ContentGeneratorPage() {
-  return (
-    <SocialMediaProvider>
-      <ContentGeneratorContent />
-    </SocialMediaProvider>
-  );
+  return <ContentGeneratorContent />;
 } 
