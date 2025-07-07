@@ -223,28 +223,6 @@ export default function AgentManagementPage() {
     { label: "AI Agents" }
   ];
 
-  // Create header actions
-  const headerActions = [
-    {
-      label: "Filters",
-      onClick: () => {},
-      icon: Filter,
-      variant: "outline" as const
-    },
-    {
-      label: "Configure All",
-      onClick: handleConfigureAll,
-      icon: Settings,
-      variant: "outline" as const
-    },
-    {
-      label: "Deploy Agent",
-      onClick: handleDeployAgent,
-      icon: Plus,
-      variant: "default" as const
-    }
-  ];
-
   // Transform agents from context to match the expected format for the UI
   const aiAgents = agents.map(agent => ({
     id: agent.id,
@@ -296,40 +274,6 @@ export default function AgentManagementPage() {
     totalRevenue: aiAgents.reduce((sum, agent) => sum + agent.totalRevenue, 0),
     avgEfficiency: aiAgents.reduce((sum, agent) => sum + agent.efficiency, 0) / aiAgents.length,
   };
-
-  // Prepare stat cards data
-  const statCards = [
-    {
-      title: "Total Agents",
-      value: overallStats.totalAgents.toString(),
-      icon: Cpu,
-    },
-    {
-      title: "Active Now",
-      value: overallStats.activeAgents.toString(),
-      icon: Activity,
-    },
-    {
-      title: "Active Tasks",
-      value: overallStats.totalTasks.toString(),
-      icon: Target,
-    },
-    {
-      title: "Avg Success Rate",
-      value: `${overallStats.avgSuccessRate.toFixed(1)}%`,
-      icon: TrendingUp,
-    },
-    {
-      title: "Total Revenue",
-      value: `$${(overallStats.totalRevenue / 1000).toFixed(0)}K`,
-      icon: DollarSign,
-    },
-    {
-      title: "Avg Efficiency",
-      value: `${overallStats.avgEfficiency.toFixed(0)}%`,
-      icon: Zap,
-    },
-  ];
 
   const tabs = [
     {
@@ -510,15 +454,61 @@ export default function AgentManagementPage() {
           title="AI Agent Management"
           description="Monitor, configure, and optimize your AI agents for maximum business impact"
           breadcrumbs={breadcrumbs}
-          actions={headerActions}
+          actions={[
+            {
+              label: "Filters",
+              onClick: () => {},
+              icon: Filter,
+              variant: "outline" as const
+            },
+            {
+              label: "Configure All",
+              onClick: handleConfigureAll,
+              icon: Settings,
+              variant: "outline" as const
+            },
+            {
+              label: "Deploy Agent",
+              onClick: handleDeployAgent,
+              icon: Plus,
+              variant: "default" as const
+            }
+          ]}
           className="mb-6"
         />
 
         {/* Overall Statistics */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-6 mb-6 sm:mb-8">
-          {statCards.map((stat, index) => (
-            <StatCard key={index} {...stat} />
-          ))}
+          <StatCard
+            title="Total Agents"
+            value={overallStats.totalAgents.toString()}
+            icon={Cpu}
+          />
+          <StatCard
+            title="Active Now"
+            value={overallStats.activeAgents.toString()}
+            icon={Activity}
+          />
+          <StatCard
+            title="Active Tasks"
+            value={overallStats.totalTasks.toString()}
+            icon={Target}
+          />
+          <StatCard
+            title="Avg Success Rate"
+            value={`${overallStats.avgSuccessRate.toFixed(1)}%`}
+            icon={TrendingUp}
+          />
+          <StatCard
+            title="Total Revenue"
+            value={`$${(overallStats.totalRevenue / 1000).toFixed(0)}K`}
+            icon={DollarSign}
+          />
+          <StatCard
+            title="Avg Efficiency"
+            value={`${overallStats.avgEfficiency.toFixed(0)}%`}
+            icon={Zap}
+          />
         </div>
 
         {/* Agent Grid */}

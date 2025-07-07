@@ -47,10 +47,10 @@ export default function RootLayout({
         >
           <CommandPaletteProvider>
             <AgentProvider>
-              {children}
-              <ThemeToggle />
-              <TailwindIndicator />
-              <Toaster position="bottom-right" richColors closeButton />
+            {children}
+            <ThemeToggle />
+            <TailwindIndicator />
+            <Toaster position="bottom-right" richColors closeButton />
             </AgentProvider>
           </CommandPaletteProvider>
         </ThemeProvider>

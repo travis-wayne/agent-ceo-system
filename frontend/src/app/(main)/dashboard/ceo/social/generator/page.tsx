@@ -1,8 +1,9 @@
-import { Metadata } from "next";
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout } from "@/components/app-layout";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useSocial } from "@/lib/social/social-context";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   Plus,
   Sparkles,
@@ -39,98 +43,164 @@ import {
   Twitter,
   Facebook,
   Instagram,
-  Youtube
+  Youtube,
+  RefreshCw,
+  ArrowRight,
+  Wand2,
+  Send,
+  Save,
+  BarChart3,
+  Globe,
+  Zap
 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Content Generator | Agent CEO",
-  description: "AI-powered social media content generation and optimization",
-};
-
 export default function ContentGeneratorPage() {
-  const generatedContent = [
-    {
-      id: "content_1",
-      title: "The Future of AI in Business Automation",
-      content: "🚀 Exploring how AI agents are revolutionizing business processes and decision-making. From customer service to strategic planning, AI is becoming an indispensable tool for modern enterprises.\n\nKey insights:\n• 40% increase in operational efficiency\n• 60% reduction in response times\n• Enhanced decision-making capabilities\n\n#AI #BusinessAutomation #Innovation #DigitalTransformation",
-      platform: "LinkedIn",
-      type: "article",
-      tone: "professional",
-      length: "medium",
-      hashtags: ["AI", "BusinessAutomation", "Innovation", "DigitalTransformation"],
-      engagement: { likes: 0, comments: 0, shares: 0 },
-      status: "generated",
-      agent: "Content Marketing Agent",
-      generatedAt: "2024-01-15T14:30:00Z"
-    },
-    {
-      id: "content_2",
-      title: "Quick Tip: Lead Qualification",
-      content: "💡 Pro tip: Automating your lead qualification process can increase conversion rates by up to 40%!\n\nOur AI agents can help you:\n✅ Identify high-value prospects\n✅ Prioritize sales efforts\n✅ Reduce manual work\n✅ Improve response times\n\nReady to transform your sales process? #BusinessAutomation #AI #Sales #LeadGeneration",
-      platform: "Twitter/X",
-      type: "tip",
-      tone: "casual",
-      length: "short",
-      hashtags: ["BusinessAutomation", "AI", "Sales", "LeadGeneration"],
-      engagement: { likes: 0, comments: 0, shares: 0 },
-      status: "generated",
-      agent: "Social Media Agent",
-      generatedAt: "2024-01-15T14:25:00Z"
-    },
-    {
-      id: "content_3",
-      title: "Customer Success Story",
-      content: "📈 Amazing results from our client: 300% increase in lead generation and 50% reduction in response time using our AI agents.\n\nReal results, real impact. See how AI automation can transform your business operations.\n\n#CustomerSuccess #AI #Results #BusinessTransformation",
-      platform: "Facebook",
-      type: "case-study",
-      tone: "enthusiastic",
-      length: "short",
-      hashtags: ["CustomerSuccess", "AI", "Results", "BusinessTransformation"],
-      engagement: { likes: 0, comments: 0, shares: 0 },
-      status: "generated",
-      agent: "Content Marketing Agent",
-      generatedAt: "2024-01-15T14:20:00Z"
-    }
-  ];
+  const { 
+    accounts,
+    posts,
+    templates,
+    generateContent,
+    getContentSuggestions,
+    createPost,
+    isLoading
+  } = useSocial();
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedPlatform, setSelectedPlatform] = useState('LinkedIn');
+  const [contentType, setContentType] = useState('article');
+  const [contentTone, setContentTone] = useState('professional');
+  const [contentLength, setContentLength] = useState('medium');
+  const [topic, setTopic] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [contentSuggestions, setContentSuggestions] = useState<string[]>([]);
+  const [recentGenerations, setRecentGenerations] = useState<any[]>([]);
 
-  const contentTemplates = [
-    {
-      id: "template_1",
-      name: "Thought Leadership",
-      description: "Establish industry authority with insightful content",
-      platforms: ["LinkedIn", "Twitter/X"],
-      tone: "professional",
-      length: "medium",
-      tags: ["thought-leadership", "industry-insights", "expertise"]
-    },
-    {
-      id: "template_2",
-      name: "Product Announcement",
-      description: "Launch new products or features with excitement",
-      platforms: ["All Platforms"],
-      tone: "enthusiastic",
-      length: "short",
-      tags: ["product-launch", "announcement", "excitement"]
-    },
-    {
-      id: "template_3",
-      name: "Quick Tips",
-      description: "Share valuable insights in bite-sized content",
-      platforms: ["Twitter/X", "LinkedIn"],
-      tone: "casual",
-      length: "short",
-      tags: ["tips", "insights", "value"]
-    },
-    {
-      id: "template_4",
-      name: "Customer Success",
-      description: "Highlight customer achievements and testimonials",
-      platforms: ["LinkedIn", "Facebook"],
-      tone: "enthusiastic",
-      length: "medium",
-      tags: ["customer-success", "testimonials", "results"]
+  // Load content suggestions when platform changes
+  useEffect(() => {
+    loadContentSuggestions();
+  }, [selectedPlatform]);
+
+  const loadContentSuggestions = async () => {
+    const suggestions = await getContentSuggestions(selectedPlatform);
+    setContentSuggestions(suggestions);
+  };
+
+  const connectedAccounts = accounts.filter(acc => acc.status === 'connected');
+  const availablePlatforms = connectedAccounts.map(acc => acc.platform);
+
+  // Content generation statistics
+  const generationStats = {
+    totalGenerated: recentGenerations.length,
+    published: recentGenerations.filter(g => g.status === 'published').length,
+    saved: recentGenerations.filter(g => g.status === 'saved').length,
+    avgEngagement: recentGenerations.reduce((sum, g) => sum + (g.engagement?.total || 0), 0) / Math.max(1, recentGenerations.length)
+  };
+
+  // Handle content generation
+  const handleGenerateContent = async () => {
+    if (!topic && !customPrompt) {
+      toast.error('Please provide a topic or custom prompt');
+      return;
     }
-  ];
+
+    setIsGenerating(true);
+    try {
+      const content = await generateContent(contentType, selectedPlatform, topic || customPrompt);
+      setGeneratedContent(content);
+      
+      // Add to recent generations
+      const newGeneration = {
+        id: `gen_${Date.now()}`,
+        content,
+        platform: selectedPlatform,
+        type: contentType,
+        tone: contentTone,
+        topic: topic || customPrompt,
+        generatedAt: new Date().toISOString(),
+        status: 'generated'
+      };
+      setRecentGenerations(prev => [newGeneration, ...prev.slice(0, 9)]);
+      
+      toast.success('Content generated successfully!');
+    } catch (error) {
+      toast.error('Failed to generate content');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Handle saving generated content as post
+  const handleSaveAsPost = async () => {
+    if (!generatedContent) {
+      toast.error('No content to save');
+      return;
+    }
+
+    const postData = {
+      title: topic || 'Generated Content',
+      content: generatedContent,
+      platforms: [selectedPlatform],
+      type: contentType,
+      status: 'draft' as const,
+      agent: 'AI Content Generator',
+      tags: topic ? [topic.replace(/\s+/g, '')] : []
+    };
+
+    const newPost = await createPost(postData);
+    if (newPost) {
+      toast.success('Content saved as draft post');
+      router.push(`/dashboard/ceo/social/posts?id=${newPost.id}`);
+    }
+  };
+
+  // Handle publishing content directly
+  const handlePublishContent = async () => {
+    if (!generatedContent) {
+      toast.error('No content to publish');
+      return;
+    }
+
+    const postData = {
+      title: topic || 'Generated Content',
+      content: generatedContent,
+      platforms: [selectedPlatform],
+      type: contentType,
+      status: 'published' as const,
+      agent: 'AI Content Generator',
+      tags: topic ? [topic.replace(/\s+/g, '')] : [],
+      publishedAt: new Date().toISOString()
+    };
+
+    const newPost = await createPost(postData);
+    if (newPost) {
+      toast.success('Content published successfully');
+      router.push(`/dashboard/ceo/social/posts?id=${newPost.id}`);
+    }
+  };
+
+  // Navigation helpers
+  const handleViewPosts = () => {
+    router.push('/dashboard/ceo/social/posts');
+  };
+
+  const handleViewCampaigns = () => {
+    router.push('/dashboard/ceo/social/campaigns');
+  };
+
+  const handleViewAnalytics = () => {
+    router.push('/dashboard/ceo/social/analytics');
+  };
+
+  const handleViewCalendar = () => {
+    router.push('/dashboard/ceo/social/calendar');
+  };
+
+  const handleViewAccounts = () => {
+    router.push('/dashboard/ceo/social/accounts');
+  };
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
@@ -149,21 +219,9 @@ export default function ContentGeneratorPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "generated":
-        return <Badge className="bg-green-100 text-green-800">Generated</Badge>;
-      case "generating":
-        return <Badge className="bg-blue-100 text-blue-800">Generating</Badge>;
-      case "failed":
-        return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Content copied to clipboard');
   };
 
   return (
@@ -189,13 +247,21 @@ export default function ContentGeneratorPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+              <Button variant="outline" onClick={handleViewCalendar}>
+                <Calendar className="h-4 w-4 mr-2" />
+                Calendar
               </Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Generate Content
+              <Button variant="outline" onClick={loadContentSuggestions}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Ideas
+              </Button>
+              <Button onClick={handleGenerateContent} disabled={isGenerating}>
+                {isGenerating ? (
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                {isGenerating ? 'Generating...' : 'Generate Content'}
               </Button>
             </div>
           </div>
@@ -207,8 +273,8 @@ export default function ContentGeneratorPage() {
               <div className="flex items-center space-x-2">
                 <MessageSquare className="h-5 w-5 text-blue-500" />
                 <div>
-                  <p className="text-2xl font-bold">{generatedContent.length}</p>
-                  <p className="text-xs text-muted-foreground">Generated Posts</p>
+                  <p className="text-2xl font-bold">{generationStats.totalGenerated}</p>
+                  <p className="text-xs text-muted-foreground">Generated</p>
                 </div>
               </div>
             </CardContent>
@@ -216,10 +282,10 @@ export default function ContentGeneratorPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
-                <Bot className="h-5 w-5 text-green-500" />
+                <Send className="h-5 w-5 text-green-500" />
                 <div>
-                  <p className="text-2xl font-bold">3</p>
-                  <p className="text-xs text-muted-foreground">AI Agents</p>
+                  <p className="text-2xl font-bold">{generationStats.published}</p>
+                  <p className="text-xs text-muted-foreground">Published</p>
                 </div>
               </div>
             </CardContent>
@@ -227,10 +293,10 @@ export default function ContentGeneratorPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-purple-500" />
+                <Save className="h-5 w-5 text-purple-500" />
                 <div>
-                  <p className="text-2xl font-bold">5</p>
-                  <p className="text-xs text-muted-foreground">Platforms</p>
+                  <p className="text-2xl font-bold">{generationStats.saved}</p>
+                  <p className="text-xs text-muted-foreground">Saved as Drafts</p>
                 </div>
               </div>
             </CardContent>
@@ -240,8 +306,8 @@ export default function ContentGeneratorPage() {
               <div className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-orange-500" />
                 <div>
-                  <p className="text-2xl font-bold">94%</p>
-                  <p className="text-xs text-muted-foreground">Success Rate</p>
+                  <p className="text-2xl font-bold">{generationStats.avgEngagement.toFixed(1)}</p>
+                  <p className="text-xs text-muted-foreground">Avg Engagement</p>
                 </div>
               </div>
             </CardContent>
@@ -317,8 +383,7 @@ export default function ContentGeneratorPage() {
                         <SelectItem value="professional">Professional</SelectItem>
                         <SelectItem value="casual">Casual</SelectItem>
                         <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                        <SelectItem value="friendly">Friendly</SelectItem>
-                        <SelectItem value="authoritative">Authoritative</SelectItem>
+                        <SelectItem value="educational">Educational</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -435,7 +500,7 @@ export default function ContentGeneratorPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {contentTemplates.map((template) => (
+                  {templates.map((template) => (
                     <Card key={template.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                       <CardHeader>
                         <CardTitle className="text-lg">{template.name}</CardTitle>
@@ -478,7 +543,7 @@ export default function ContentGeneratorPage() {
           {/* Generated Tab */}
           <TabsContent value="generated" className="space-y-6">
             <div className="grid gap-6">
-              {generatedContent.map((content) => (
+              {recentGenerations.map((content) => (
                 <Card key={content.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -494,7 +559,13 @@ export default function ContentGeneratorPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(content.status)}
+                        {content.status === 'generated' ? (
+                          <Badge className="bg-green-100 text-green-800">Generated</Badge>
+                        ) : content.status === 'generating' ? (
+                          <Badge className="bg-blue-100 text-blue-800">Generating</Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-800">Failed</Badge>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
@@ -522,25 +593,29 @@ export default function ContentGeneratorPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Generated:</span>
-                        <p className="font-medium">{formatDateTime(content.generatedAt)}</p>
+                        <p className="font-medium">{new Date(content.generatedAt).toLocaleString()}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Engagement:</span>
                         <p className="font-medium">
-                          ❤️ {content.engagement.likes} 💬 {content.engagement.comments} 🔄 {content.engagement.shares}
+                          ❤️ {content.engagement?.likes || 0} 💬 {content.engagement?.comments || 0} 🔄 {content.engagement?.shares || 0}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between mt-4 pt-4 border-t">
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => copyToClipboard(content.content)}>
                           <Copy className="h-4 w-4 mr-2" />
                           Copy
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Export
+                        <Button variant="outline" size="sm" onClick={() => handleSaveAsPost()}>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save as Draft
+                        </Button>
+                        <Button size="sm" onClick={() => handlePublishContent()}>
+                          <Send className="h-4 w-4 mr-1" />
+                          Publish Now
                         </Button>
                       </div>
                       <div className="flex gap-2">

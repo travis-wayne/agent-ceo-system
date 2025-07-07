@@ -156,7 +156,7 @@ export default function EditAgentPage() {
       if (agentData) {
         setAgent(agentData);
         setSelectedAgent(agentData);
-        setFormData({
+          setFormData({
           name: agentData.name,
           specialization: agentData.specialties[0] || '',
           model: agentData.model,
@@ -246,7 +246,7 @@ export default function EditAgentPage() {
   const handleDeleteConfirm = async () => {
     const success = await deleteAgent(agentId);
     if (success) {
-      router.push('/dashboard/ceo/agents');
+        router.push('/dashboard/ceo/agents');
     }
   };
 
@@ -277,98 +277,9 @@ export default function EditAgentPage() {
 
   // Create breadcrumbs
   const breadcrumbs = [
-    { label: "CEO Dashboard", href: "/dashboard/ceo" },
-    { label: "AI Agents", href: "/dashboard/ceo/agents" },
+          { label: "CEO Dashboard", href: "/dashboard/ceo" },
+          { label: "AI Agents", href: "/dashboard/ceo/agents" },
     { label: `Edit ${agent?.name || 'Agent'}` }
-  ];
-
-  // Create header actions
-  const headerActions = [
-    {
-      label: "View Analytics",
-      onClick: () => router.push(`/dashboard/ceo/agents/analytics`),
-      icon: BarChart3,
-      variant: "outline" as const
-    },
-    {
-      label: "Start Chat",
-      onClick: () => router.push(`/dashboard/ceo/chat?agent=${agentId}`),
-      icon: MessageSquare,
-      variant: "outline" as const
-    },
-    {
-      label: "Delete Agent",
-      onClick: handleDelete,
-      icon: Trash2,
-      variant: "destructive" as const
-    }
-  ];
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading agent...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!agent) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Agent Not Found</h3>
-          <p className="text-muted-foreground mb-4">The agent you're looking for doesn't exist.</p>
-          <Link href="/dashboard/ceo/agents">
-            <Button>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Agents
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Prepare performance stat cards
-  const performanceStats = [
-    {
-      title: "Success Rate",
-      value: `${agent.performance.successRate}%`,
-      icon: Target,
-      trend: { value: Math.abs(agent.trends.successRate.value), isPositive: agent.trends.successRate.direction === 'up', period: "vs last month" }
-    },
-    {
-      title: "Efficiency",
-      value: `${agent.performance.efficiency}%`,
-      icon: Zap,
-      trend: { value: Math.abs(agent.trends.efficiency.value), isPositive: agent.trends.efficiency.direction === 'up', period: "vs last month" }
-    },
-    {
-      title: "Tasks Completed",
-      value: agent.performance.tasksCompleted.toString(),
-      icon: CheckCircle,
-    },
-    {
-      title: "Business Impact",
-      value: `${agent.performance.businessImpact}/10`,
-      icon: TrendingUp,
-      trend: { value: Math.abs(agent.trends.businessImpact.value), isPositive: agent.trends.businessImpact.direction === 'up', period: "vs last month" }
-    },
-    {
-      title: "Revenue Generated",
-      value: `$${(agent.performance.revenueGenerated / 1000).toFixed(0)}K`,
-      icon: DollarSign,
-    },
-    {
-      title: "Avg Response Time",
-      value: `${agent.performance.avgResponseTime}h`,
-      icon: Clock,
-      trend: { value: Math.abs(agent.trends.responseTime.value), isPositive: agent.trends.responseTime.direction === 'down', period: "vs last month" }
-    }
   ];
 
   // Create tabs for different sections
@@ -379,24 +290,24 @@ export default function EditAgentPage() {
       icon: Settings,
       content: (
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
+            <Card>
+              <CardHeader>
               <CardTitle>Basic Information</CardTitle>
               <CardDescription>Configure the agent's basic settings and capabilities</CardDescription>
-            </CardHeader>
+              </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                  <div className="space-y-2">
                   <Label htmlFor="name">Agent Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
+                    <Input
+                      id="name"
+                      value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter agent name"
-                  />
-                </div>
+                      placeholder="Enter agent name"
+                    />
+                  </div>
 
-                <div className="space-y-2">
+                  <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select value={formData.status} onValueChange={handleStatusChange}>
                     <SelectTrigger>
@@ -426,33 +337,33 @@ export default function EditAgentPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                  <div className="space-y-2">
                   <Label htmlFor="model">AI Model</Label>
                   <Select value={formData.model} onValueChange={(value) => setFormData({ ...formData, model: value })}>
-                    <SelectTrigger>
+                      <SelectTrigger>
                       <SelectValue placeholder="Select AI model" />
-                    </SelectTrigger>
-                    <SelectContent>
+                      </SelectTrigger>
+                      <SelectContent>
                       {agentType.models.map((model) => (
                         <SelectItem key={model} value={model}>
                           {model}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="maxTasks">Max Concurrent Tasks</Label>
-                  <Input
-                    id="maxTasks"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={formData.maxConcurrentTasks}
+                  <div className="space-y-2">
+                    <Label htmlFor="maxTasks">Max Concurrent Tasks</Label>
+                    <Input
+                      id="maxTasks"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={formData.maxConcurrentTasks}
                     onChange={(e) => setFormData({ ...formData, maxConcurrentTasks: parseInt(e.target.value) || 1 })}
-                  />
-                </div>
+                    />
+                  </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="avatar">Avatar</Label>
@@ -542,9 +453,9 @@ export default function EditAgentPage() {
                     ))}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
         </div>
       )
     },
@@ -633,8 +544,8 @@ export default function EditAgentPage() {
                     <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.responseTime.direction)}`}>
                       {getTrendIcon(agent.trends.responseTime.direction)}
                       <span className="font-medium">{Math.abs(agent.trends.responseTime.value)}h</span>
-                    </div>
-                  </div>
+                </div>
+                </div>
                 </div>
                 
                 <div className="pt-4 border-t">
@@ -694,11 +605,11 @@ export default function EditAgentPage() {
       content: (
         <div className="space-y-6">
           <Card>
-            <CardHeader>
+              <CardHeader>
               <CardTitle>Recent Conversations</CardTitle>
               <CardDescription>Chat history and interactions with this agent</CardDescription>
-            </CardHeader>
-            <CardContent>
+              </CardHeader>
+              <CardContent>
               {(() => {
                 const agentChats = getAgentChats(agentId);
                 
@@ -712,7 +623,7 @@ export default function EditAgentPage() {
                         <Button>
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Start Chat
-                        </Button>
+                  </Button>
                       </Link>
                     </div>
                   );
@@ -763,6 +674,73 @@ export default function EditAgentPage() {
     }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading agent...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!agent) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">Agent Not Found</h3>
+          <p className="text-muted-foreground mb-4">The agent you're looking for doesn't exist.</p>
+          <Link href="/dashboard/ceo/agents">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Agents
+                  </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Prepare performance stat cards
+  const performanceStats = [
+    {
+      title: "Success Rate",
+      value: `${agent.performance.successRate}%`,
+      icon: Target,
+      trend: { value: Math.abs(agent.trends.successRate.value), isPositive: agent.trends.successRate.direction === 'up', period: "vs last month" }
+    },
+    {
+      title: "Efficiency",
+      value: `${agent.performance.efficiency}%`,
+      icon: Zap,
+      trend: { value: Math.abs(agent.trends.efficiency.value), isPositive: agent.trends.efficiency.direction === 'up', period: "vs last month" }
+    },
+    {
+      title: "Tasks Completed",
+      value: agent.performance.tasksCompleted.toString(),
+      icon: CheckCircle,
+    },
+    {
+      title: "Business Impact",
+      value: `${agent.performance.businessImpact}/10`,
+      icon: TrendingUp,
+      trend: { value: Math.abs(agent.trends.businessImpact.value), isPositive: agent.trends.businessImpact.direction === 'up', period: "vs last month" }
+    },
+    {
+      title: "Revenue Generated",
+      value: `$${(agent.performance.revenueGenerated / 1000).toFixed(0)}K`,
+      icon: DollarSign,
+    },
+    {
+      title: "Avg Response Time",
+      value: `${agent.performance.avgResponseTime}h`,
+      icon: Clock,
+      trend: { value: Math.abs(agent.trends.responseTime.value), isPositive: agent.trends.responseTime.direction === 'down', period: "vs last month" }
+    }
+  ];
+
   return (
     <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
       {/* Page Header */}
@@ -770,7 +748,26 @@ export default function EditAgentPage() {
         title={`Edit ${agent.name}`}
         description={`Configure and manage your ${agent.type} agent`}
         breadcrumbs={breadcrumbs}
-        actions={headerActions}
+        actions={[
+          {
+            label: "View Analytics",
+            onClick: () => router.push(`/dashboard/ceo/agents/analytics`),
+            icon: BarChart3,
+            variant: "outline" as const
+          },
+          {
+            label: "Start Chat",
+            onClick: () => router.push(`/dashboard/ceo/chat?agent=${agentId}`),
+            icon: MessageSquare,
+            variant: "outline" as const
+          },
+          {
+            label: "Delete Agent",
+            onClick: handleDelete,
+            icon: Trash2,
+            variant: "destructive" as const
+          }
+        ]}
         icon={Edit3}
         className="mb-6"
       />
@@ -829,6 +826,6 @@ export default function EditAgentPage() {
         onConfirm={handleDeleteConfirm}
         {...deleteConfig}
       />
-    </main>
+      </main>
   );
 } 

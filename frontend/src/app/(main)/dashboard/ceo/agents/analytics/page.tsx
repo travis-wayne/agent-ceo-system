@@ -116,67 +116,7 @@ export default function AgentAnalyticsPage() {
     { label: "Analytics" }
   ];
 
-  // Create header actions
-  const headerActions = [
-    {
-      label: "Filters",
-      onClick: () => {},
-      icon: Filter,
-      variant: "outline" as const
-    },
-    {
-      label: "Export Report",
-      onClick: () => toast.success("Analytics report exported"),
-      icon: Download,
-      variant: "outline" as const
-    },
-    {
-      label: "Refresh Data",
-      onClick: refreshAgents,
-      icon: RefreshCw,
-      variant: "outline" as const
-    }
-  ];
-
-  // Prepare stat cards
-  const statCards = [
-    {
-      title: "Total Agents",
-      value: overallStats.totalAgents.toString(),
-      icon: Cpu,
-      trend: { value: 12.5, isPositive: true, period: "vs last month" }
-    },
-    {
-      title: "Active Agents",
-      value: overallStats.activeAgents.toString(),
-      icon: Activity,
-      trend: { value: 8.3, isPositive: true, period: "vs last week" }
-    },
-    {
-      title: "Tasks Completed",
-      value: overallStats.totalTasks.toString(),
-      icon: Target,
-      trend: { value: 15.7, isPositive: true, period: "vs last month" }
-    },
-    {
-      title: "Avg Success Rate",
-      value: `${overallStats.avgSuccessRate.toFixed(1)}%`,
-      icon: TrendingUp,
-      trend: { value: 2.1, isPositive: true, period: "vs last month" }
-    },
-    {
-      title: "Total Revenue",
-      value: `$${(overallStats.totalRevenue / 1000).toFixed(0)}K`,
-      icon: DollarSign,
-      trend: { value: 18.9, isPositive: true, period: "vs last month" }
-    },
-    {
-      title: "Avg Efficiency",
-      value: `${overallStats.avgEfficiency.toFixed(1)}%`,
-      icon: Zap,
-      trend: { value: 3.4, isPositive: true, period: "vs last month" }
-    }
-  ];
+  // Header actions and stat cards will be defined inline to avoid serialization issues
 
   // Create tabs for different analytics views
   const tabs = [
@@ -299,7 +239,7 @@ export default function AgentAnalyticsPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Response:</span>
+                      <span className="text-muted-foreground">Response Time:</span>
                       <div className={`flex items-center space-x-1 ${getTrendColor(agent.trends.responseTime.direction)}`}>
                         {getTrendIcon(agent.trends.responseTime.direction)}
                         <span className="font-medium">{Math.abs(agent.trends.responseTime.value)}h</span>
@@ -308,40 +248,23 @@ export default function AgentAnalyticsPage() {
                   </div>
 
                   {/* Recent Tasks */}
-                  <div>
-                    <h4 className="font-medium mb-2 text-sm">Recent Tasks</h4>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Recent Tasks</h4>
                     <div className="space-y-2">
-                      {agent.recentTasks.slice(0, 2).map((task, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                          <span className="text-sm truncate">{task.name}</span>
+                      {agent.recentTasks.slice(0, 3).map((task, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
+                          <span className="truncate">{task.name}</span>
                           <div className="flex items-center space-x-2">
-                            <Badge variant={task.completion === 100 ? "default" : "secondary"} className="text-xs">
-                              {task.completion}%
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {task.impact}/10
-                            </span>
+                            <span className="text-xs text-muted-foreground">{task.completion}%</span>
+                            <div className="w-12 h-2 bg-muted rounded-full">
+                              <div 
+                                className="h-full bg-primary rounded-full" 
+                                style={{ width: `${task.completion}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="pt-2 border-t">
-                    <div className="flex gap-2">
-                      <Link href={`/dashboard/ceo/chat?agent=${agent.id}`} className="flex-1">
-                        <Button size="sm" variant="outline" className="w-full">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Chat
-                        </Button>
-                      </Link>
-                      <Link href={`/dashboard/ceo/agents/edit/${agent.id}`} className="flex-1">
-                        <Button size="sm" variant="outline" className="w-full">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Configure
-                        </Button>
-                      </Link>
                     </div>
                   </div>
                 </CardContent>
@@ -349,7 +272,7 @@ export default function AgentAnalyticsPage() {
             ))}
           </div>
         </div>
-      )
+      ),
     },
     {
       id: "performance",
@@ -595,8 +518,26 @@ export default function AgentAnalyticsPage() {
         title="Agent Analytics"
         description="Comprehensive performance analytics and insights for all AI agents"
         breadcrumbs={breadcrumbs}
-        actions={headerActions}
-        icon={BarChart3}
+        actions={[
+          {
+            label: "Filters",
+            onClick: () => {},
+            icon: Filter,
+            variant: "outline" as const
+          },
+          {
+            label: "Export Report",
+            onClick: () => toast.success("Analytics report exported"),
+            icon: Download,
+            variant: "outline" as const
+          },
+          {
+            label: "Refresh Data",
+            onClick: refreshAgents,
+            icon: RefreshCw,
+            variant: "outline" as const
+          }
+        ]}
         className="mb-6"
       />
 
@@ -631,9 +572,42 @@ export default function AgentAnalyticsPage() {
 
       {/* Overall Statistics */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-6 mb-6 sm:mb-8">
-        {statCards.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
+        <StatCard
+          title="Total Agents"
+          value={overallStats.totalAgents.toString()}
+          icon={Cpu}
+          trend={{ value: 12.5, isPositive: true, period: "vs last month" }}
+        />
+        <StatCard
+          title="Active Agents"
+          value={overallStats.activeAgents.toString()}
+          icon={Activity}
+          trend={{ value: 8.3, isPositive: true, period: "vs last week" }}
+        />
+        <StatCard
+          title="Tasks Completed"
+          value={overallStats.totalTasks.toString()}
+          icon={Target}
+          trend={{ value: 15.7, isPositive: true, period: "vs last month" }}
+        />
+        <StatCard
+          title="Avg Success Rate"
+          value={`${overallStats.avgSuccessRate.toFixed(1)}%`}
+          icon={TrendingUp}
+          trend={{ value: 2.1, isPositive: true, period: "vs last month" }}
+        />
+        <StatCard
+          title="Total Revenue"
+          value={`$${(overallStats.totalRevenue / 1000).toFixed(0)}K`}
+          icon={DollarSign}
+          trend={{ value: 18.9, isPositive: true, period: "vs last month" }}
+        />
+        <StatCard
+          title="Avg Efficiency"
+          value={`${overallStats.avgEfficiency.toFixed(1)}%`}
+          icon={Zap}
+          trend={{ value: 3.4, isPositive: true, period: "vs last month" }}
+        />
       </div>
 
       {/* Analytics Tabs */}

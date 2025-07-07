@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useSocial } from "@/lib/social/social-context";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   Users,
   Plus,
@@ -31,122 +36,113 @@ import {
   Facebook,
   Linkedin,
   Youtube,
-  Videotape
+  Videotape,
+  ArrowRight,
+  BarChart3,
+  Calendar,
+  Target,
+  Zap,
+  Sync,
+  ExternalLink
 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Social Accounts | Agent CEO",
-  description: "Manage your social media accounts and connections",
-};
-
 export default function SocialAccountsPage() {
-  const socialAccounts = [
-    {
-      id: "acc_1",
-      platform: "LinkedIn",
-      accountName: "Agent CEO Official",
-      username: "@agentceo",
-      status: "connected",
-      followers: 12500,
-      following: 890,
-      posts: 156,
-      engagement: 4.8,
-      lastSync: "2 minutes ago",
-      profileUrl: "https://linkedin.com/company/agentceo",
-      icon: Linkedin,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
-    },
-    {
-      id: "acc_2",
-      platform: "Twitter/X",
-      accountName: "Agent CEO",
-      username: "@agentceo_ai",
-      status: "connected",
-      followers: 8200,
-      following: 1200,
-      posts: 287,
-      engagement: 3.2,
-      lastSync: "5 minutes ago",
-      profileUrl: "https://twitter.com/agentceo_ai",
-      icon: Twitter,
-      color: "text-black",
-      bgColor: "bg-gray-50"
-    },
-    {
-      id: "acc_3",
-      platform: "Facebook",
-      accountName: "Agent CEO Business",
-      username: "agentceobusiness",
-      status: "pending",
-      followers: 0,
-      following: 0,
-      posts: 0,
-      engagement: 0,
-      lastSync: "Never",
-      profileUrl: "",
-      icon: Facebook,
-      color: "text-blue-500",
-      bgColor: "bg-blue-50"
-    },
-    {
-      id: "acc_4",
-      platform: "Instagram",
-      accountName: "Agent CEO",
-      username: "@agentceo_official",
-      status: "disconnected",
-      followers: 0,
-      following: 0,
-      posts: 0,
-      engagement: 0,
-      lastSync: "Never",
-      profileUrl: "",
-      icon: Instagram,
-      color: "text-purple-500",
-      bgColor: "bg-purple-50"
-    },
-    {
-      id: "acc_5",
-      platform: "YouTube",
-      accountName: "Agent CEO Channel",
-      username: "@agentceo",
-      status: "connected",
-      followers: 3400,
-      following: 45,
-      posts: 23,
-      engagement: 2.1,
-      lastSync: "1 hour ago",
-      profileUrl: "https://youtube.com/@agentceo",
-      icon: Videotape,
-      color: "text-red-600",
-      bgColor: "bg-red-50"
-    },
-    {
-      id: "acc_6",
-      platform: "TikTok",
-      accountName: "Agent CEO Channel",
-      username: "@agentceo",
-      status: "connected",
-      followers: 3400,
-      following: 45,
-      posts: 23,
-      engagement: 2.1,
-      lastSync: "1 hour ago",
-      profileUrl: "https://youtube.com/@agentceo",
-      icon: Youtube,
-      color: "text-red-600",
-      bgColor: "bg-red-50"
+  const { 
+    accounts, 
+    selectedAccount,
+    isLoading,
+    refreshAccounts,
+    connectAccount,
+    disconnectAccount,
+    syncAccount,
+    setSelectedAccount,
+    getAccountAnalytics
+  } = useSocial();
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [showConnectForm, setShowConnectForm] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState('');
+  const [accountAnalytics, setAccountAnalytics] = useState<any>(null);
+
+  // Handle URL parameters
+  useEffect(() => {
+    const accountId = searchParams.get('id');
+    if (accountId && accounts.length > 0) {
+      const account = accounts.find(a => a.id === accountId);
+      if (account) {
+        setSelectedAccount(account);
+        loadAccountAnalytics(account.id);
+      }
     }
-  ];
+  }, [searchParams, accounts, setSelectedAccount]);
+
+  const loadAccountAnalytics = async (accountId: string) => {
+    const analytics = await getAccountAnalytics(accountId);
+    setAccountAnalytics(analytics);
+  };
 
   const availablePlatforms = [
-    { name: "LinkedIn", icon: Linkedin, color: "text-blue-600", description: "Professional networking" },
-    { name: "Twitter/X", icon: Twitter, color: "text-black", description: "Microblogging platform" },
-    { name: "Facebook", icon: Facebook, color: "text-blue-500", description: "Social networking" },
-    { name: "Instagram", icon: Instagram, color: "text-purple-500", description: "Photo and video sharing" },
-    { name: "YouTube", icon: Youtube, color: "text-red-600", description: "Video platform" },
-    { name: "TikTok", icon: Videotape, color: "text-red-600", description: "Video platform" },
+    { name: "LinkedIn", icon: Linkedin, color: "text-blue-600", description: "Professional networking", bgColor: "bg-blue-50" },
+    { name: "Twitter/X", icon: Twitter, color: "text-black", description: "Microblogging platform", bgColor: "bg-gray-50" },
+    { name: "Facebook", icon: Facebook, color: "text-blue-500", description: "Social networking", bgColor: "bg-blue-50" },
+    { name: "Instagram", icon: Instagram, color: "text-purple-500", description: "Photo and video sharing", bgColor: "bg-purple-50" },
+    { name: "YouTube", icon: Youtube, color: "text-red-600", description: "Video platform", bgColor: "bg-red-50" },
+    { name: "TikTok", icon: Videotape, color: "text-red-600", description: "Short video platform", bgColor: "bg-red-50" },
   ];
+
+  // Calculate statistics
+  const accountStats = {
+    total: accounts.length,
+    connected: accounts.filter(a => a.status === 'connected').length,
+    pending: accounts.filter(a => a.status === 'pending').length,
+    totalFollowers: accounts.reduce((sum, a) => sum + a.followers, 0),
+    avgEngagement: accounts.filter(a => a.status === 'connected').reduce((sum, a) => sum + a.engagement, 0) / Math.max(1, accounts.filter(a => a.status === 'connected').length)
+  };
+
+  // Handle account actions
+  const handleConnectAccount = async (platform: string, credentials: any) => {
+    const success = await connectAccount(platform, credentials);
+    if (success) {
+      setShowConnectForm(false);
+      setSelectedPlatform('');
+    }
+  };
+
+  const handleDisconnectAccount = async (accountId: string) => {
+    if (window.confirm('Are you sure you want to disconnect this account?')) {
+      const success = await disconnectAccount(accountId);
+      if (success && selectedAccount?.id === accountId) {
+        setSelectedAccount(null);
+      }
+    }
+  };
+
+  const handleSyncAccount = async (accountId: string) => {
+    const success = await syncAccount(accountId);
+    if (success) {
+      await loadAccountAnalytics(accountId);
+    }
+  };
+
+  // Navigation helpers
+  const handleViewPosts = (account: any) => {
+    setSelectedAccount(account);
+    router.push(`/dashboard/ceo/social/posts?platform=${account.platform}`);
+  };
+
+  const handleViewAnalytics = (account: any) => {
+    setSelectedAccount(account);
+    router.push(`/dashboard/ceo/social/analytics?accountId=${account.id}`);
+  };
+
+  const handleViewCalendar = () => {
+    router.push('/dashboard/ceo/social/calendar');
+  };
+
+  const handleViewCampaigns = () => {
+    router.push('/dashboard/ceo/social/campaigns');
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -174,6 +170,15 @@ export default function SocialAccountsPage() {
     }
   };
 
+  const getPlatformIcon = (platform: string) => {
+    const platformData = availablePlatforms.find(p => p.name === platform);
+    if (platformData) {
+      const IconComponent = platformData.icon;
+      return <IconComponent className={`h-6 w-6 ${platformData.color}`} />;
+    }
+    return <Globe className="h-6 w-6 text-gray-500" />;
+  };
+
   return (
     <>
       <PageHeader
@@ -197,13 +202,17 @@ export default function SocialAccountsPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh All
+              <Button variant="outline" onClick={handleViewCalendar}>
+                <Calendar className="h-4 w-4 mr-2" />
+                Calendar
               </Button>
-              <Button>
+              <Button variant="outline" onClick={() => refreshAccounts()}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+              <Button onClick={() => setShowConnectForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Account
+                Connect Account
               </Button>
             </div>
           </div>
@@ -215,7 +224,7 @@ export default function SocialAccountsPage() {
               <div className="flex items-center space-x-2">
                 <Users className="h-5 w-5 text-blue-500" />
                 <div>
-                  <p className="text-2xl font-bold">{socialAccounts.length}</p>
+                  <p className="text-2xl font-bold">{accountStats.total}</p>
                   <p className="text-xs text-muted-foreground">Total Accounts</p>
                 </div>
               </div>
@@ -226,7 +235,7 @@ export default function SocialAccountsPage() {
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
                 <div>
-                  <p className="text-2xl font-bold">{socialAccounts.filter(acc => acc.status === 'connected').length}</p>
+                  <p className="text-2xl font-bold">{accountStats.connected}</p>
                   <p className="text-xs text-muted-foreground">Connected</p>
                 </div>
               </div>
@@ -237,7 +246,7 @@ export default function SocialAccountsPage() {
               <div className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-purple-500" />
                 <div>
-                  <p className="text-2xl font-bold">{socialAccounts.reduce((sum, acc) => sum + acc.followers, 0).toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{accountStats.totalFollowers.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">Total Followers</p>
                 </div>
               </div>
@@ -246,203 +255,288 @@ export default function SocialAccountsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5 text-orange-500" />
+                <Heart className="h-5 w-5 text-red-500" />
                 <div>
-                  <p className="text-2xl font-bold">{socialAccounts.reduce((sum, acc) => sum + acc.posts, 0).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Posts</p>
+                  <p className="text-2xl font-bold">{accountStats.avgEngagement.toFixed(1)}%</p>
+                  <p className="text-xs text-muted-foreground">Avg Engagement</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="accounts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="accounts">Connected Accounts</TabsTrigger>
-            <TabsTrigger value="add">Add Account</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+        <div className="grid gap-4 md:grid-cols-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/ceo/social/posts')}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <MessageSquare className="h-6 w-6 text-blue-500" />
+                <div>
+                  <p className="font-medium">Manage Posts</p>
+                  <p className="text-sm text-muted-foreground">Create & schedule</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleViewCampaigns}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <Target className="h-6 w-6 text-green-500" />
+                <div>
+                  <p className="font-medium">View Campaigns</p>
+                  <p className="text-sm text-muted-foreground">Marketing campaigns</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/ceo/social/analytics')}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <BarChart3 className="h-6 w-6 text-purple-500" />
+                <div>
+                  <p className="font-medium">Analytics</p>
+                  <p className="text-sm text-muted-foreground">Performance insights</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/ceo/social/generator')}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <Zap className="h-6 w-6 text-orange-500" />
+                <div>
+                  <p className="font-medium">AI Generator</p>
+                  <p className="text-sm text-muted-foreground">Generate content</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Connected Accounts Tab */}
-          <TabsContent value="accounts" className="space-y-6">
-            <div className="grid gap-6">
-              {socialAccounts.map((account) => (
-                <Card key={account.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`h-12 w-12 rounded-lg ${account.bgColor} flex items-center justify-center`}>
-                          <account.icon className={`h-6 w-6 ${account.color}`} />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{account.accountName}</CardTitle>
-                          <CardDescription>
-                            {account.platform} • {account.username} • {account.followers.toLocaleString()} followers
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(account.status)}
-                        {getStatusBadge(account.status)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Followers</span>
-                        <p className="font-medium">{account.followers.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Following</span>
-                        <p className="font-medium">{account.following.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Posts</span>
-                        <p className="font-medium">{account.posts.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Engagement</span>
-                        <p className="font-medium">{account.engagement}%</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Last Sync: {account.lastSync}</p>
-                          {account.profileUrl && (
-                            <p className="text-sm text-muted-foreground">Profile: {account.profileUrl}</p>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Profile
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Sync Now
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Settings className="h-4 w-4 mr-2" />
-                            Configure
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Disconnect
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Add Account Tab */}
-          <TabsContent value="add" className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Connected Accounts */}
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Connect New Account</CardTitle>
-                <CardDescription>Add a new social media account to your dashboard</CardDescription>
+                <CardTitle>Connected Accounts</CardTitle>
+                <CardDescription>
+                  Your connected social media platforms
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {availablePlatforms.map((platform) => (
-                    <Card key={platform.name} className="hover:shadow-lg transition-shadow cursor-pointer">
-                      <CardHeader>
+                <div className="space-y-4">
+                  {accounts.map((account) => (
+                    <div
+                      key={account.id}
+                      className={`p-4 border rounded-lg transition-all ${
+                        selectedAccount?.id === account.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
-                          <div className={`h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center`}>
-                            <platform.icon className={`h-5 w-5 ${platform.color}`} />
-                          </div>
+                          {getPlatformIcon(account.platform)}
                           <div>
-                            <CardTitle className="text-lg">{platform.name}</CardTitle>
-                            <CardDescription>{platform.description}</CardDescription>
+                            <h4 className="font-medium">{account.accountName}</h4>
+                            <p className="text-sm text-muted-foreground">{account.username}</p>
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <Button className="w-full">
-                          <Link className="h-4 w-4 mr-2" />
-                          Connect {platform.name}
-                        </Button>
-                      </CardContent>
-                    </Card>
+                        <div className="flex items-center space-x-2">
+                          {getStatusIcon(account.status)}
+                          {getStatusBadge(account.status)}
+                        </div>
+                      </div>
+                      
+                      {account.status === 'connected' && (
+                        <div className="grid grid-cols-3 gap-4 mb-3">
+                          <div className="text-center">
+                            <p className="text-lg font-semibold">{account.followers.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">Followers</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-semibold">{account.posts}</p>
+                            <p className="text-xs text-muted-foreground">Posts</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-semibold">{account.engagement}%</p>
+                            <p className="text-xs text-muted-foreground">Engagement</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Last sync: {account.lastSync}
+                        </p>
+                        <div className="flex items-center space-x-2">
+                          {account.status === 'connected' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSyncAccount(account.id)}
+                              >
+                                <Sync className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewPosts(account)}
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewAnalytics(account)}
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                              </Button>
+                              {account.profileUrl && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(account.profileUrl, '_blank')}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedAccount(account)}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDisconnectAccount(account.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
 
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Available Platforms */}
             <Card>
               <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Configure global settings for social media accounts</CardDescription>
+                <CardTitle className="text-lg">Available Platforms</CardTitle>
+                <CardDescription>Connect new social media accounts</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Auto-sync accounts</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically sync account data every hour
-                      </p>
+              <CardContent className="space-y-3">
+                {availablePlatforms.map((platform) => {
+                  const isConnected = accounts.some(acc => acc.platform === platform.name && acc.status === 'connected');
+                  const IconComponent = platform.icon;
+                  
+                  return (
+                    <div
+                      key={platform.name}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                        isConnected 
+                          ? 'bg-green-50 border-green-200' 
+                          : 'hover:shadow-md cursor-pointer'
+                      }`}
+                      onClick={() => !isConnected && handleConnectAccount(platform.name, {})}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-lg ${platform.bgColor}`}>
+                          <IconComponent className={`h-5 w-5 ${platform.color}`} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{platform.name}</p>
+                          <p className="text-xs text-muted-foreground">{platform.description}</p>
+                        </div>
+                      </div>
+                      {isConnected ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Plus className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Cross-platform posting</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Allow posting to multiple platforms simultaneously
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Engagement notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified about new followers and engagement
-                      </p>
-                    </div>
-                    <Switch />
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Sync Frequency</h4>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="sync-interval">Sync Interval</Label>
-                      <select className="w-full p-2 border rounded-md">
-                        <option value="15min">Every 15 minutes</option>
-                        <option value="30min">Every 30 minutes</option>
-                        <option value="1hour">Every hour</option>
-                        <option value="6hours">Every 6 hours</option>
-                        <option value="daily">Daily</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="retry-attempts">Retry Attempts</Label>
-                      <select className="w-full p-2 border rounded-md">
-                        <option value="1">1 attempt</option>
-                        <option value="3">3 attempts</option>
-                        <option value="5">5 attempts</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+
+            {/* Selected Account Details */}
+            {selectedAccount && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Account Details</CardTitle>
+                  <CardDescription>{selectedAccount.platform} Account</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Account Name</Label>
+                    <Input value={selectedAccount.accountName} readOnly />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Username</Label>
+                    <Input value={selectedAccount.username} readOnly />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <div className="flex items-center space-x-2">
+                      {getStatusIcon(selectedAccount.status)}
+                      <span className="text-sm">{selectedAccount.status}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Auto-sync</Label>
+                    <div className="flex items-center space-x-2">
+                      <Switch checked={selectedAccount.isActive} />
+                      <span className="text-sm">Enable automatic synchronization</span>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full" 
+                      onClick={() => handleViewPosts(selectedAccount)}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      View Posts
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleViewAnalytics(selectedAccount)}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Analytics
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleSyncAccount(selectedAccount.id)}
+                    >
+                      <Sync className="h-4 w-4 mr-2" />
+                      Sync Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </main>
     </>
   );
