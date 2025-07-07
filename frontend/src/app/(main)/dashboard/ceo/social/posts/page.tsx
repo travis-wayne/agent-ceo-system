@@ -1,8 +1,10 @@
-import { Metadata } from "next";
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,22 +27,28 @@ import {
   BarChart3,
   Image,
   Video,
-  Link,
+  Link as LinkIcon,
   Settings,
   RefreshCw,
   Linkedin,
   Twitter,
   Facebook,
   Instagram,
-  Youtube
+  Youtube,
+  Target,
+  TrendingUp,
+  Users
 } from "lucide-react";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { ActionButtonGroup } from "@/components/ui/action-button-group";
+import { SocialMediaProvider, useSocialMedia } from "@/lib/contexts/social-media-context";
 
-export const metadata: Metadata = {
-  title: "Social Posts | Agent CEO",
-  description: "Manage and schedule your social media posts",
-};
+function SocialPostsContent() {
+  const { posts: contextPosts, campaigns, refreshData, isLoading } = useSocialMedia();
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-export default function SocialPostsPage() {
   const posts = [
     {
       id: "post_1",
@@ -53,7 +61,8 @@ export default function SocialPostsPage() {
       type: "article",
       engagement: { likes: 0, comments: 0, shares: 0, views: 0 },
       agent: "Content Marketing Agent",
-      tags: ["AI", "BusinessAutomation", "Innovation"]
+      tags: ["AI", "BusinessAutomation", "Innovation"],
+      campaignId: "campaign_1"
     },
     {
       id: "post_2",
@@ -66,7 +75,8 @@ export default function SocialPostsPage() {
       type: "tip",
       engagement: { likes: 47, comments: 12, shares: 8, views: 1200 },
       agent: "Social Media Agent",
-      tags: ["BusinessAutomation", "AI", "Sales"]
+      tags: ["BusinessAutomation", "AI", "Sales"],
+      campaignId: "campaign_2"
     },
     {
       id: "post_3",
@@ -79,7 +89,8 @@ export default function SocialPostsPage() {
       type: "announcement",
       engagement: { likes: 0, comments: 0, shares: 0, views: 0 },
       agent: "Marketing Agent",
-      tags: ["ProductLaunch", "AI", "Innovation"]
+      tags: ["ProductLaunch", "AI", "Innovation"],
+      campaignId: "campaign_1"
     },
     {
       id: "post_4",
@@ -92,9 +103,54 @@ export default function SocialPostsPage() {
       type: "case-study",
       engagement: { likes: 89, comments: 23, shares: 15, views: 3400 },
       agent: "Content Marketing Agent",
-      tags: ["CustomerSuccess", "AI", "Results"]
+      tags: ["CustomerSuccess", "AI", "Results"],
+      campaignId: "campaign_3"
     }
   ];
+
+  const headerActions = useMemo(() => [
+    {
+      label: "Refresh Data",
+      variant: "outline" as const,
+      icon: RefreshCw,
+      onClick: refreshData,
+      disabled: isLoading,
+    },
+    {
+      label: "Schedule Post",
+      variant: "outline" as const,
+      icon: Calendar,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/calendar"
+    },
+    {
+      label: "Create Post",
+      variant: "default" as const,
+      icon: Plus,
+      onClick: () => {},
+    },
+  ], [refreshData, isLoading]);
+
+  const quickActions = useMemo(() => [
+    {
+      label: "Generate Content",
+      icon: Target,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/generator"
+    },
+    {
+      label: "View Calendar",
+      icon: Calendar,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/calendar"
+    },
+    {
+      label: "View Analytics",
+      icon: BarChart3,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/analytics"
+    }
+  ], []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -148,321 +204,234 @@ export default function SocialPostsPage() {
     return new Date(dateString).toLocaleString();
   };
 
+  const getCampaignName = (campaignId: string) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    return campaign ? campaign.name : "No Campaign";
+  };
+
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         post.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTab = activeTab === "all" || post.status === activeTab;
+    return matchesSearch && matchesTab;
+  });
+
+  const publishedPosts = posts.filter(p => p.status === 'published');
+  const scheduledPosts = posts.filter(p => p.status === 'scheduled');
+  const draftPosts = posts.filter(p => p.status === 'draft');
+
+  const totalEngagement = publishedPosts.reduce((sum, post) => 
+    sum + post.engagement.likes + post.engagement.comments + post.engagement.shares, 0
+  );
+  const totalViews = publishedPosts.reduce((sum, post) => sum + post.engagement.views, 0);
+
   return (
     <>
-      <PageHeader
-        items={[
-          { label: "CEO Dashboard", href: "/dashboard/ceo" },
-          { label: "Social Media", href: "/dashboard/ceo/social" },
-          { label: "Posts", isCurrentPage: true },
-        ]}
-      />
+      <div className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+        <PageHeaderWithActions
+          title="Social Posts"
+          description="Manage and schedule your social media posts across all platforms"
+          breadcrumbs={[
+            { label: "CEO Dashboard", href: "/dashboard/ceo" },
+            { label: "Social Media", href: "/dashboard/ceo/social" },
+            { label: "Posts" },
+          ]}
+          actions={headerActions}
+        />
+      </div>
       
-      <main className="p-6">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <MessageSquare className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Social Posts</h1>
-              </div>
-              <p className="text-muted-foreground">
-                Manage and schedule your social media posts
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Post
-              </Button>
-            </div>
-          </div>
+      <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6 space-y-8">
+        {/* Overview Stats */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Posts"
+            value={posts.length.toString()}
+            description="All content"
+            icon={MessageSquare}
+            trend={{ value: 5, isPositive: true, period: "this month" }}
+          />
+          <StatCard
+            title="Published"
+            value={publishedPosts.length.toString()}
+            description="Live content"
+            icon={CheckCircle}
+            trend={{ value: 2, isPositive: true, period: "this week" }}
+          />
+          <StatCard
+            title="Total Engagement"
+            value={totalEngagement.toString()}
+            description="Likes, comments, shares"
+            icon={Heart}
+            trend={{ value: 15, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Total Views"
+            value={totalViews.toLocaleString()}
+            description="Content reach"
+            icon={Eye}
+            trend={{ value: 12, isPositive: true, period: "vs last month" }}
+          />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">{posts.length}</p>
-                  <p className="text-xs text-muted-foreground">Total Posts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold">{posts.filter(post => post.status === 'published').length}</p>
-                  <p className="text-xs text-muted-foreground">Published</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-purple-500" />
-                <div>
-                  <p className="text-2xl font-bold">{posts.filter(post => post.status === 'scheduled').length}</p>
-                  <p className="text-xs text-muted-foreground">Scheduled</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">{posts.reduce((sum, post) => sum + post.engagement.likes + post.engagement.comments + post.engagement.shares, 0).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Engagement</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>
+              Navigate to related sections for content management
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ActionButtonGroup actions={quickActions} />
+          </CardContent>
+        </Card>
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All Posts</TabsTrigger>
-            <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-            <TabsTrigger value="drafts">Drafts</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
+        {/* Posts Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Posts Management
+            </CardTitle>
+            <CardDescription>
+              View and manage all your social media posts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Search and Filters */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search posts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Posts ({posts.length})</SelectItem>
+                  <SelectItem value="published">Published ({publishedPosts.length})</SelectItem>
+                  <SelectItem value="scheduled">Scheduled ({scheduledPosts.length})</SelectItem>
+                  <SelectItem value="draft">Draft ({draftPosts.length})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* All Posts Tab */}
-          <TabsContent value="all" className="space-y-6">
-            <div className="grid gap-6">
-              {posts.map((post) => (
-                <Card key={post.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+            {/* Posts List */}
+            <div className="space-y-4">
+              {filteredPosts.map((post) => (
+                <Card key={post.id} className="p-4">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="p-2 rounded-lg bg-gray-50">
                         {getStatusIcon(post.status)}
-                        <div>
-                          <CardTitle className="text-lg">{post.title}</CardTitle>
-                          <CardDescription>
-                            {post.platforms.join(", ")} • {post.type} • {post.agent}
-                          </CardDescription>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-lg">{post.title}</h3>
+                          {getStatusBadge(post.status)}
+                          <Badge variant="outline">{post.type}</Badge>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(post.status)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{post.content}</p>
-                    
-                    <div className="flex items-center gap-2 mb-4">
-                      {post.platforms.map((platform) => (
-                        <div key={platform} className="flex items-center gap-1">
-                          {getPlatformIcon(platform)}
-                          <span className="text-xs">{platform}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Scheduled:</span>
-                        <p className="font-medium">{formatDateTime(post.scheduledFor)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Published:</span>
-                        <p className="font-medium">{formatDateTime(post.publishedAt)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Engagement:</span>
-                        <p className="font-medium">
-                          ❤️ {post.engagement.likes} 💬 {post.engagement.comments} 🔄 {post.engagement.shares}
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {post.content}
                         </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Views:</span>
-                        <p className="font-medium">{post.engagement.views.toLocaleString()}</p>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{formatDateTime(post.scheduledFor)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            <span>{post.platforms.join(', ')}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Target className="h-4 w-4" />
+                            <span>{getCampaignName(post.campaignId)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <BarChart3 className="h-4 w-4 mr-1" />
+                        Analytics
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="font-semibold text-lg">{post.engagement.likes}</div>
+                      <div className="text-sm text-muted-foreground">Likes</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="font-semibold text-lg">{post.engagement.comments}</div>
+                      <div className="text-sm text-muted-foreground">Comments</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="font-semibold text-lg">{post.engagement.shares}</div>
+                      <div className="text-sm text-muted-foreground">Shares</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="font-semibold text-lg">{post.engagement.views}</div>
+                      <div className="text-sm text-muted-foreground">Views</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="font-semibold text-lg">{post.agent}</div>
+                      <div className="text-sm text-muted-foreground">Agent</div>
+                    </div>
+                  </div>
 
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share
-                        </Button>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <BarChart3 className="h-4 w-4 mr-2" />
-                          Analytics
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Platforms:</span>
+                      <div className="flex items-center gap-1">
+                        {post.platforms.map(platform => (
+                          <div key={platform} className="flex items-center gap-1">
+                            {getPlatformIcon(platform)}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </CardContent>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Tags:</span>
+                      <div className="flex gap-1">
+                        {post.tags.slice(0, 3).map(tag => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            #{tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </Card>
               ))}
             </div>
-          </TabsContent>
-
-          {/* Scheduled Posts Tab */}
-          <TabsContent value="scheduled" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Scheduled Posts</CardTitle>
-                <CardDescription>Posts scheduled for future publication</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {posts.filter(post => post.status === 'scheduled').map((post) => (
-                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Calendar className="h-5 w-5 text-blue-500" />
-                        <div>
-                          <h4 className="font-medium">{post.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {post.platforms.join(", ")} • {formatDateTime(post.scheduledFor)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Drafts Tab */}
-          <TabsContent value="drafts" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Draft Posts</CardTitle>
-                <CardDescription>Unpublished posts and drafts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {posts.filter(post => post.status === 'draft').map((post) => (
-                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Clock className="h-5 w-5 text-gray-500" />
-                        <div>
-                          <h4 className="font-medium">{post.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {post.platforms.join(", ")} • Draft
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button size="sm">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Schedule
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Post Performance</CardTitle>
-                  <CardDescription>Engagement metrics for published posts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Average Likes</span>
-                      <span className="text-sm font-medium">68</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Average Comments</span>
-                      <span className="text-sm font-medium">12</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Average Shares</span>
-                      <span className="text-sm font-medium">8</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Average Views</span>
-                      <span className="text-sm font-medium">2,300</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Platform Performance</CardTitle>
-                  <CardDescription>Engagement by platform</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Linkedin className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm">LinkedIn</span>
-                      </div>
-                      <span className="text-sm font-medium">4.8% engagement</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Twitter className="h-4 w-4 text-black" />
-                        <span className="text-sm">Twitter/X</span>
-                      </div>
-                      <span className="text-sm font-medium">3.2% engagement</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Facebook className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm">Facebook</span>
-                      </div>
-                      <span className="text-sm font-medium">2.1% engagement</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </main>
     </>
+  );
+}
+
+export default function SocialPostsPage() {
+  return (
+    <SocialMediaProvider>
+      <SocialPostsContent />
+    </SocialMediaProvider>
   );
 } 

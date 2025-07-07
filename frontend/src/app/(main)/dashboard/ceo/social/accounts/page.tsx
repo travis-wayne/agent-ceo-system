@@ -1,9 +1,10 @@
-import { Metadata } from "next";
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout } from "@/components/app-layout";
-import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,7 @@ import {
   Trash2,
   Edit,
   Eye,
-  Link,
+  Link as LinkIcon,
   Globe,
   MessageSquare,
   Heart,
@@ -31,15 +32,20 @@ import {
   Facebook,
   Linkedin,
   Youtube,
-  Videotape
+  Videotape,
+  Calendar,
+  Target,
+  BarChart3
 } from "lucide-react";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { ActionButtonGroup } from "@/components/ui/action-button-group";
+import { SocialMediaProvider, useSocialMedia } from "@/lib/contexts/social-media-context";
 
-export const metadata: Metadata = {
-  title: "Social Accounts | Agent CEO",
-  description: "Manage your social media accounts and connections",
-};
+function SocialAccountsContent() {
+  const { accounts, setSelectedAccount, refreshData, isLoading } = useSocialMedia();
+  const [activeTab, setActiveTab] = useState("connected");
 
-export default function SocialAccountsPage() {
   const socialAccounts = [
     {
       id: "acc_1",
@@ -148,6 +154,43 @@ export default function SocialAccountsPage() {
     { name: "TikTok", icon: Videotape, color: "text-red-600", description: "Video platform" },
   ];
 
+  const headerActions = useMemo(() => [
+    {
+      label: "Refresh Data",
+      variant: "outline" as const,
+      icon: RefreshCw,
+      onClick: refreshData,
+      disabled: isLoading,
+    },
+    {
+      label: "Add Account",
+      variant: "default" as const,
+      icon: Plus,
+      onClick: () => {},
+    },
+  ], [refreshData, isLoading]);
+
+  const quickActions = useMemo(() => [
+    {
+      label: "View Posts",
+      icon: MessageSquare,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/posts"
+    },
+    {
+      label: "Schedule Content",
+      icon: Calendar,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/calendar"
+    },
+    {
+      label: "View Analytics",
+      icon: BarChart3,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/analytics"
+    }
+  ], []);
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "connected":
@@ -174,276 +217,230 @@ export default function SocialAccountsPage() {
     }
   };
 
+  const connectedAccounts = socialAccounts.filter(acc => acc.status === "connected");
+  const pendingAccounts = socialAccounts.filter(acc => acc.status === "pending");
+  const disconnectedAccounts = socialAccounts.filter(acc => acc.status === "disconnected");
+
+  const totalFollowers = connectedAccounts.reduce((sum, acc) => sum + acc.followers, 0);
+  const totalPosts = connectedAccounts.reduce((sum, acc) => sum + acc.posts, 0);
+  const avgEngagement = connectedAccounts.reduce((sum, acc) => sum + acc.engagement, 0) / connectedAccounts.length || 0;
+
   return (
     <>
-      <PageHeader
-        items={[
-          { label: "CEO Dashboard", href: "/dashboard/ceo" },
-          { label: "Social Media", href: "/dashboard/ceo/social" },
-          { label: "Accounts", isCurrentPage: true },
-        ]}
-      />
+      <div className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+        <PageHeaderWithActions
+          title="Social Accounts"
+          description="Manage your social media accounts and connections across all platforms"
+          breadcrumbs={[
+            { label: "CEO Dashboard", href: "/dashboard/ceo" },
+            { label: "Social Media", href: "/dashboard/ceo/social" },
+            { label: "Accounts" },
+          ]}
+          actions={headerActions}
+        />
+      </div>
       
-      <main className="p-6">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Users className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Social Accounts</h1>
-              </div>
-              <p className="text-muted-foreground">
-                Manage your social media accounts and connections
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh All
-              </Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Account
-              </Button>
-            </div>
-          </div>
+      <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6 space-y-8">
+        {/* Overview Stats */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Connected Accounts"
+            value={connectedAccounts.length.toString()}
+            description="Active connections"
+            icon={Users}
+            trend={{ value: 2, isPositive: true, period: "new this month" }}
+          />
+          <StatCard
+            title="Total Followers"
+            value={totalFollowers.toLocaleString()}
+            description="Combined reach"
+            icon={TrendingUp}
+            trend={{ value: 1200, isPositive: true, period: "this month" }}
+          />
+          <StatCard
+            title="Total Posts"
+            value={totalPosts.toString()}
+            description="Published content"
+            icon={MessageSquare}
+            trend={{ value: 18, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Avg Engagement"
+            value={`${avgEngagement.toFixed(1)}%`}
+            description="Engagement rate"
+            icon={Heart}
+            trend={{ value: 0.3, isPositive: true, period: "vs last month" }}
+          />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">{socialAccounts.length}</p>
-                  <p className="text-xs text-muted-foreground">Total Accounts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold">{socialAccounts.filter(acc => acc.status === 'connected').length}</p>
-                  <p className="text-xs text-muted-foreground">Connected</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-purple-500" />
-                <div>
-                  <p className="text-2xl font-bold">{socialAccounts.reduce((sum, acc) => sum + acc.followers, 0).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Followers</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">{socialAccounts.reduce((sum, acc) => sum + acc.posts, 0).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Posts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>
+              Common tasks for account management
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ActionButtonGroup actions={quickActions} />
+          </CardContent>
+        </Card>
 
-        <Tabs defaultValue="accounts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="accounts">Connected Accounts</TabsTrigger>
-            <TabsTrigger value="add">Add Account</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+        {/* Accounts Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Account Management
+            </CardTitle>
+            <CardDescription>
+              Connect and manage your social media accounts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="connected">
+                  Connected ({connectedAccounts.length})
+                </TabsTrigger>
+                <TabsTrigger value="pending">
+                  Pending ({pendingAccounts.length})
+                </TabsTrigger>
+                <TabsTrigger value="available">
+                  Available ({availablePlatforms.length})
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Connected Accounts Tab */}
-          <TabsContent value="accounts" className="space-y-6">
-            <div className="grid gap-6">
-              {socialAccounts.map((account) => (
-                <Card key={account.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`h-12 w-12 rounded-lg ${account.bgColor} flex items-center justify-center`}>
-                          <account.icon className={`h-6 w-6 ${account.color}`} />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{account.accountName}</CardTitle>
-                          <CardDescription>
-                            {account.platform} • {account.username} • {account.followers.toLocaleString()} followers
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(account.status)}
-                        {getStatusBadge(account.status)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Followers</span>
-                        <p className="font-medium">{account.followers.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Following</span>
-                        <p className="font-medium">{account.following.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Posts</span>
-                        <p className="font-medium">{account.posts.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Engagement</span>
-                        <p className="font-medium">{account.engagement}%</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 pt-4 border-t">
+              <TabsContent value="connected" className="space-y-4">
+                <div className="grid gap-4">
+                  {connectedAccounts.map((account) => (
+                    <Card key={account.id} className="p-4">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Last Sync: {account.lastSync}</p>
-                          {account.profileUrl && (
-                            <p className="text-sm text-muted-foreground">Profile: {account.profileUrl}</p>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Profile
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Sync Now
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Settings className="h-4 w-4 mr-2" />
-                            Configure
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Disconnect
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Add Account Tab */}
-          <TabsContent value="add" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Connect New Account</CardTitle>
-                <CardDescription>Add a new social media account to your dashboard</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {availablePlatforms.map((platform) => (
-                    <Card key={platform.name} className="hover:shadow-lg transition-shadow cursor-pointer">
-                      <CardHeader>
-                        <div className="flex items-center space-x-3">
-                          <div className={`h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center`}>
-                            <platform.icon className={`h-5 w-5 ${platform.color}`} />
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-lg ${account.bgColor}`}>
+                            <account.icon className={`h-6 w-6 ${account.color}`} />
                           </div>
                           <div>
-                            <CardTitle className="text-lg">{platform.name}</CardTitle>
-                            <CardDescription>{platform.description}</CardDescription>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold">{account.accountName}</h3>
+                              {getStatusBadge(account.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {account.username} • {account.platform}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Last sync: {account.lastSync}
+                            </p>
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <Button className="w-full">
-                          <Link className="h-4 w-4 mr-2" />
-                          Connect {platform.name}
-                        </Button>
-                      </CardContent>
+                        <div className="flex items-center gap-6">
+                          <div className="text-center">
+                            <div className="font-semibold">{account.followers.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">Followers</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-semibold">{account.posts}</div>
+                            <div className="text-xs text-muted-foreground">Posts</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-semibold">{account.engagement}%</div>
+                            <div className="text-xs text-muted-foreground">Engagement</div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Settings className="h-4 w-4 mr-1" />
+                              Settings
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </Card>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </TabsContent>
 
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Configure global settings for social media accounts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Auto-sync accounts</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically sync account data every hour
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Cross-platform posting</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Allow posting to multiple platforms simultaneously
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Engagement notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified about new followers and engagement
-                      </p>
-                    </div>
-                    <Switch />
-                  </div>
+              <TabsContent value="pending" className="space-y-4">
+                <div className="grid gap-4">
+                  {pendingAccounts.map((account) => (
+                    <Card key={account.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-lg ${account.bgColor}`}>
+                            <account.icon className={`h-6 w-6 ${account.color}`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold">{account.accountName}</h3>
+                              {getStatusBadge(account.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {account.username} • {account.platform}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Awaiting authorization
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <RefreshCw className="h-4 w-4 mr-1" />
+                            Retry
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-                
-                <Separator />
-                
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Sync Frequency</h4>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="sync-interval">Sync Interval</Label>
-                      <select className="w-full p-2 border rounded-md">
-                        <option value="15min">Every 15 minutes</option>
-                        <option value="30min">Every 30 minutes</option>
-                        <option value="1hour">Every hour</option>
-                        <option value="6hours">Every 6 hours</option>
-                        <option value="daily">Daily</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="retry-attempts">Retry Attempts</Label>
-                      <select className="w-full p-2 border rounded-md">
-                        <option value="1">1 attempt</option>
-                        <option value="3">3 attempts</option>
-                        <option value="5">5 attempts</option>
-                      </select>
-                    </div>
-                  </div>
+              </TabsContent>
+
+              <TabsContent value="available" className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {availablePlatforms.map((platform) => (
+                    <Card key={platform.name} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-lg bg-gray-50">
+                            <platform.icon className={`h-6 w-6 ${platform.color}`} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{platform.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {platform.description}
+                            </p>
+                          </div>
+                        </div>
+                        <Button size="sm">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Connect
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </main>
     </>
+  );
+}
+
+export default function SocialAccountsPage() {
+  return (
+    <SocialMediaProvider>
+      <SocialAccountsContent />
+    </SocialMediaProvider>
   );
 } 

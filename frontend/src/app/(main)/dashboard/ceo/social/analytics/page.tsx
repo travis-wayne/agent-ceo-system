@@ -1,9 +1,10 @@
-import { Metadata } from "next";
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout } from "@/components/app-layout";
-import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,15 +29,19 @@ import {
   Target,
   DollarSign,
   Clock,
-  Settings
+  Settings,
+  Plus
 } from "lucide-react";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { ActionButtonGroup } from "@/components/ui/action-button-group";
+import { SocialMediaProvider, useSocialMedia } from "@/lib/contexts/social-media-context";
 
-export const metadata: Metadata = {
-  title: "Social Analytics | Agent CEO",
-  description: "Comprehensive social media analytics and performance insights",
-};
+function SocialAnalyticsContent() {
+  const { accounts, campaigns, posts } = useSocialMedia();
+  const [timeRange, setTimeRange] = useState("30d");
+  const [selectedPlatform, setSelectedPlatform] = useState("all");
 
-export default function SocialAnalyticsPage() {
   const overviewStats = {
     totalFollowers: 45600,
     totalPosts: 127,
@@ -154,29 +159,47 @@ export default function SocialAnalyticsPage() {
     }
   ];
 
-  const audienceInsights = {
-    demographics: {
-      ageGroups: [
-        { age: "18-24", percentage: 12 },
-        { age: "25-34", percentage: 28 },
-        { age: "35-44", percentage: 34 },
-        { age: "45-54", percentage: 18 },
-        { age: "55+", percentage: 8 }
-      ],
-      gender: [
-        { gender: "Male", percentage: 58 },
-        { gender: "Female", percentage: 42 }
-      ],
-      locations: [
-        { location: "United States", percentage: 45 },
-        { location: "United Kingdom", percentage: 18 },
-        { location: "Canada", percentage: 12 },
-        { location: "Australia", percentage: 8 },
-        { location: "Other", percentage: 17 }
-      ]
+  const headerActions = useMemo(() => [
+    {
+      label: "Export Report",
+      variant: "outline" as const,
+      icon: Download,
+      onClick: () => {},
     },
-    interests: ["Technology", "Business", "Marketing", "AI", "Automation", "Leadership"]
-  };
+    {
+      label: "Refresh Data",
+      variant: "outline" as const,
+      icon: RefreshCw,
+      onClick: () => {},
+    },
+    {
+      label: "Settings",
+      variant: "outline" as const,
+      icon: Settings,
+      onClick: () => {},
+    },
+  ], []);
+
+  const quickActions = useMemo(() => [
+    {
+      label: "View Posts",
+      icon: MessageSquare,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/posts"
+    },
+    {
+      label: "View Campaigns",
+      icon: Target,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/campaigns"
+    },
+    {
+      label: "Schedule Content",
+      icon: Calendar,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/calendar"
+    }
+  ], []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -190,393 +213,354 @@ export default function SocialAnalyticsPage() {
     );
   };
 
+  const getPlatformIcon = (platform: string) => {
+    switch (platform) {
+      case "LinkedIn":
+        return <Linkedin className="h-4 w-4 text-blue-600" />;
+      case "Twitter/X":
+        return <Twitter className="h-4 w-4 text-black" />;
+      case "Facebook":
+        return <Facebook className="h-4 w-4 text-blue-500" />;
+      case "Instagram":
+        return <Instagram className="h-4 w-4 text-purple-500" />;
+      default:
+        return <BarChart3 className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
   return (
     <>
-      <PageHeader
-        items={[
-          { label: "CEO Dashboard", href: "/dashboard/ceo" },
-          { label: "Social Media", href: "/dashboard/ceo/social" },
-          { label: "Analytics", isCurrentPage: true },
-        ]}
-      />
+      <div className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+        <PageHeaderWithActions
+          title="Social Analytics"
+          description="Comprehensive social media analytics and performance insights across all platforms"
+          breadcrumbs={[
+            { label: "CEO Dashboard", href: "/dashboard/ceo" },
+            { label: "Social Media", href: "/dashboard/ceo/social" },
+            { label: "Analytics" },
+          ]}
+          actions={headerActions}
+        />
+      </div>
       
-      <main className="p-6">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <BarChart3 className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Social Analytics</h1>
+      <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6 space-y-8">
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters & Time Range
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="timeRange">Time Range</Label>
+                <Select value={timeRange} onValueChange={setTimeRange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Last 7 days</SelectItem>
+                    <SelectItem value="30d">Last 30 days</SelectItem>
+                    <SelectItem value="90d">Last 90 days</SelectItem>
+                    <SelectItem value="1y">Last year</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <p className="text-muted-foreground">
-                Comprehensive social media analytics and performance insights
-              </p>
+              <div className="flex-1">
+                <Label htmlFor="platform">Platform</Label>
+                <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Platforms</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="twitter">Twitter/X</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <Select defaultValue="30days">
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                  <SelectItem value="1year">Last year</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Overview Stats */}
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">{overviewStats.totalFollowers.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Followers</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold">{overviewStats.totalPosts.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Posts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Heart className="h-5 w-5 text-purple-500" />
-                <div>
-                  <p className="text-2xl font-bold">{overviewStats.totalEngagement.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Engagement</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">{overviewStats.avgEngagementRate}%</p>
-                  <p className="text-xs text-muted-foreground">Avg Engagement Rate</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Followers"
+            value={overviewStats.totalFollowers.toLocaleString()}
+            description="Across all platforms"
+            icon={Users}
+            trend={{ value: 12, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Total Engagement"
+            value={overviewStats.totalEngagement.toLocaleString()}
+            description="Likes, comments, shares"
+            icon={Heart}
+            trend={{ value: 8, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Total Reach"
+            value={overviewStats.totalReach.toLocaleString()}
+            description="Unique users reached"
+            icon={Eye}
+            trend={{ value: 15, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Avg Engagement Rate"
+            value={`${overviewStats.avgEngagementRate}%`}
+            description="Engagement per post"
+            icon={TrendingUp}
+            trend={{ value: 0.3, isPositive: true, period: "vs last month" }}
+          />
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="platforms">Platforms</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="audience">Audience</TabsTrigger>
-          </TabsList>
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>
+              Navigate to related sections for deeper insights
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ActionButtonGroup actions={quickActions} />
+          </CardContent>
+        </Card>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Overview</CardTitle>
-                  <CardDescription>Key metrics across all platforms</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Reach</span>
-                      <span className="text-sm font-medium">{overviewStats.totalReach.toLocaleString()}</span>
-                    </div>
-                    <Progress value={75} className="h-2" />
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Impressions</span>
-                      <span className="text-sm font-medium">{overviewStats.totalImpressions.toLocaleString()}</span>
-                    </div>
-                    <Progress value={85} className="h-2" />
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Clicks</span>
-                      <span className="text-sm font-medium">{overviewStats.totalClicks.toLocaleString()}</span>
-                    </div>
-                    <Progress value={45} className="h-2" />
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Conversion Rate</span>
-                      <span className="text-sm font-medium">{overviewStats.conversionRate}%</span>
-                    </div>
-                    <Progress value={21} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Growth Trends</CardTitle>
-                  <CardDescription>Monthly follower growth and engagement trends</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Follower Growth</span>
-                      </div>
-                      <span className="text-sm font-medium">+12.5%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Engagement Rate</span>
-                      </div>
-                      <span className="text-sm font-medium">+0.8%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Reach</span>
-                      </div>
-                      <span className="text-sm font-medium">+18.2%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrendingDown className="h-4 w-4 text-red-500" />
-                        <span className="text-sm">Impressions</span>
-                      </div>
-                      <span className="text-sm font-medium">-2.1%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Platforms Tab */}
-          <TabsContent value="platforms" className="space-y-6">
-            <div className="grid gap-6">
-              {platformStats.map((platform) => (
-                <Card key={platform.platform} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`h-12 w-12 rounded-lg ${platform.bgColor} flex items-center justify-center`}>
-                          <platform.icon className={`h-6 w-6 ${platform.color}`} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Platform Performance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Platform Performance
+              </CardTitle>
+              <CardDescription>
+                Performance metrics by platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {platformStats.map((platform) => (
+                  <div key={platform.platform} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${platform.bgColor}`}>
+                          <platform.icon className={`h-5 w-5 ${platform.color}`} />
                         </div>
                         <div>
-                          <CardTitle className="text-lg">{platform.platform}</CardTitle>
-                          <CardDescription>
-                            {platform.followers.toLocaleString()} followers • {platform.posts} posts
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getTrendIcon(platform.trendUp)}
-                        <Badge className={platform.trendUp ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                          {platform.trend}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Engagement</span>
-                        <p className="font-medium">{platform.engagement.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Engagement Rate</span>
-                        <p className="font-medium">{platform.engagementRate}%</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Reach</span>
-                        <p className="font-medium">{platform.reach.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Impressions</span>
-                        <p className="font-medium">{platform.impressions.toLocaleString()}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <BarChart3 className="h-4 w-4 mr-2" />
-                          Detailed Analytics
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Schedule Posts
-                        </Button>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Profile
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Settings
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Content Tab */}
-          <TabsContent value="content" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Performing Posts</CardTitle>
-                <CardDescription>Posts with the highest engagement and reach</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {topPosts.map((post, index) => (
-                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-medium">{index + 1}</span>
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{post.title}</h4>
+                          <h4 className="font-semibold">{platform.platform}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {post.platform} • {post.type} • {formatDate(post.publishedAt)}
+                            {platform.followers.toLocaleString()} followers
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{post.engagement}</p>
-                          <p className="text-xs text-muted-foreground">engagement</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{post.reach.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">reach</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{post.engagementRate}%</p>
-                          <p className="text-xs text-muted-foreground">rate</p>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View
-                        </Button>
+                      <div className="flex items-center gap-1">
+                        {getTrendIcon(platform.trendUp)}
+                        <span className={`text-sm font-medium ${platform.trendUp ? 'text-green-600' : 'text-red-600'}`}>
+                          {platform.trend}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium">{platform.posts}</div>
+                        <div className="text-muted-foreground">Posts</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">{platform.engagement}</div>
+                        <div className="text-muted-foreground">Engagement</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">{platform.engagementRate}%</div>
+                        <div className="text-muted-foreground">Rate</div>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Reach</span>
+                        <span>{platform.reach.toLocaleString()}</span>
+                      </div>
+                      <Progress value={(platform.reach / 100000) * 100} className="h-2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Top Performing Posts */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Top Performing Posts
+              </CardTitle>
+              <CardDescription>
+                Your best content from the selected period
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {topPosts.map((post, index) => (
+                  <div key={post.id} className="p-4 border rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {getPlatformIcon(post.platform)}
+                          <span className="text-sm text-muted-foreground">{post.platform}</span>
+                        </div>
+                      </div>
+                      <Badge variant="outline">{post.type}</Badge>
+                    </div>
+                    <h4 className="font-medium mb-2 line-clamp-2">{post.title}</h4>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <div className="font-medium">{post.engagement}</div>
+                        <div className="text-muted-foreground">Engagement</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">{post.reach.toLocaleString()}</div>
+                        <div className="text-muted-foreground">Reach</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">{post.engagementRate}%</div>
+                        <div className="text-muted-foreground">Rate</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(post.publishedAt)}
+                        </span>
+                        <Link href={`/dashboard/ceo/social/posts?id=${post.id}`}>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-4">
+                <Link href="/dashboard/ceo/social/posts">
+                  <Button variant="outline" className="w-full">
+                    View All Posts
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Additional Analytics */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Best Posting Times
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Monday 9:00 AM</span>
+                  <Badge className="bg-green-100 text-green-800">Peak</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Wednesday 2:00 PM</span>
+                  <Badge className="bg-blue-100 text-blue-800">High</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Friday 11:00 AM</span>
+                  <Badge className="bg-blue-100 text-blue-800">High</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Audience Tab */}
-          <TabsContent value="audience" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Age Demographics</CardTitle>
-                  <CardDescription>Age distribution of your audience</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {audienceInsights.demographics.ageGroups.map((ageGroup) => (
-                      <div key={ageGroup.age} className="flex items-center justify-between">
-                        <span className="text-sm">{ageGroup.age}</span>
-                        <div className="flex items-center gap-2">
-                          <Progress value={ageGroup.percentage} className="w-24 h-2" />
-                          <span className="text-sm font-medium">{ageGroup.percentage}%</span>
-                        </div>
-                      </div>
-                    ))}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Content Types
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Articles</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={65} className="w-16 h-2" />
+                    <span className="text-sm">65%</span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Tips</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={25} className="w-16 h-2" />
+                    <span className="text-sm">25%</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Updates</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={10} className="w-16 h-2" />
+                    <span className="text-sm">10%</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Geographic Distribution</CardTitle>
-                  <CardDescription>Top locations of your audience</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {audienceInsights.demographics.locations.map((location) => (
-                      <div key={location.location} className="flex items-center justify-between">
-                        <span className="text-sm">{location.location}</span>
-                        <div className="flex items-center gap-2">
-                          <Progress value={location.percentage} className="w-24 h-2" />
-                          <span className="text-sm font-medium">{location.percentage}%</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gender Distribution</CardTitle>
-                  <CardDescription>Gender breakdown of your audience</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {audienceInsights.demographics.gender.map((gender) => (
-                      <div key={gender.gender} className="flex items-center justify-between">
-                        <span className="text-sm">{gender.gender}</span>
-                        <div className="flex items-center gap-2">
-                          <Progress value={gender.percentage} className="w-24 h-2" />
-                          <span className="text-sm font-medium">{gender.percentage}%</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Interests</CardTitle>
-                  <CardDescription>Interests and topics your audience engages with</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {audienceInsights.interests.map((interest) => (
-                      <Badge key={interest} variant="outline">
-                        {interest}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                ROI Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Cost per Click</span>
+                  <span className="font-medium">$0.45</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Conversion Rate</span>
+                  <span className="font-medium">2.1%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Revenue Attribution</span>
+                  <span className="font-medium">$8,420</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </>
+  );
+}
+
+export default function SocialAnalyticsPage() {
+  return (
+    <SocialMediaProvider>
+      <SocialAnalyticsContent />
+    </SocialMediaProvider>
   );
 } 

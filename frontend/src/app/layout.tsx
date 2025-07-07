@@ -3,6 +3,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPaletteProvider } from "@/providers/command-palette-provider";
 import { AgentProvider } from "@/lib/agents/agent-context";
+import { LoadingBar, LoadingProvider } from "@/components/loading-bar";
 import { siteConfig } from "@/lib/config";
 import { cn, constructMetadata } from "@/lib/utils";
 import { GeistMono } from "geist/font/mono";
@@ -47,10 +48,13 @@ export default function RootLayout({
         >
           <CommandPaletteProvider>
             <AgentProvider>
+              <LoadingProvider>
+                <LoadingBar />
               {children}
               <ThemeToggle />
               <TailwindIndicator />
               <Toaster position="bottom-right" richColors closeButton />
+              </LoadingProvider>
             </AgentProvider>
           </CommandPaletteProvider>
         </ThemeProvider>

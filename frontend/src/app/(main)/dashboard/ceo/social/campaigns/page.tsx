@@ -1,9 +1,10 @@
-import { Metadata } from "next";
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout } from "@/components/app-layout";
-import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -34,16 +35,19 @@ import {
   Twitter,
   Facebook,
   Instagram,
-  Youtube
+  Youtube,
+  RefreshCw
 } from "lucide-react";
+import { PageHeaderWithActions } from "@/components/ui/page-header-with-actions";
+import { StatCard } from "@/components/ui/stat-card";
+import { ActionButtonGroup } from "@/components/ui/action-button-group";
+import { SocialMediaProvider, useSocialMedia } from "@/lib/contexts/social-media-context";
 
-export const metadata: Metadata = {
-  title: "Social Campaigns | Agent CEO",
-  description: "Manage your social media campaigns and marketing initiatives",
-};
+function SocialCampaignsContent() {
+  const { campaigns, setSelectedCampaign, refreshData, isLoading } = useSocialMedia();
+  const [activeTab, setActiveTab] = useState("active");
 
-export default function SocialCampaignsPage() {
-  const campaigns = [
+  const campaignData = [
     {
       id: "campaign_1",
       name: "Product Launch - AI Agent Platform",
@@ -126,6 +130,43 @@ export default function SocialCampaignsPage() {
     }
   ];
 
+  const headerActions = useMemo(() => [
+    {
+      label: "Refresh Data",
+      variant: "outline" as const,
+      icon: RefreshCw,
+      onClick: refreshData,
+      disabled: isLoading,
+    },
+    {
+      label: "New Campaign",
+      variant: "default" as const,
+      icon: Plus,
+      onClick: () => {},
+    },
+  ], [refreshData, isLoading]);
+
+  const quickActions = useMemo(() => [
+    {
+      label: "View Analytics",
+      icon: BarChart3,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/analytics"
+    },
+    {
+      label: "View Posts",
+      icon: MessageSquare,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/posts"
+    },
+    {
+      label: "Schedule Content",
+      icon: Calendar,
+      onClick: () => {},
+      href: "/dashboard/ceo/social/calendar"
+    }
+  ], []);
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "active":
@@ -191,417 +232,327 @@ export default function SocialCampaignsPage() {
     return Math.round(((now - start) / (end - start)) * 100);
   };
 
+  const activeCampaigns = campaignData.filter(c => c.status === 'active');
+  const completedCampaigns = campaignData.filter(c => c.status === 'completed');
+  const draftCampaigns = campaignData.filter(c => c.status === 'draft');
+
+  const totalBudget = campaignData.reduce((sum, c) => sum + c.budget, 0);
+  const totalSpent = campaignData.reduce((sum, c) => sum + c.spent, 0);
+  const totalReach = campaignData.reduce((sum, c) => sum + c.reach, 0);
+  const totalConversions = campaignData.reduce((sum, c) => sum + c.conversions, 0);
+
   return (
     <>
-      <PageHeader
-        items={[
-          { label: "CEO Dashboard", href: "/dashboard/ceo" },
-          { label: "Social Media", href: "/dashboard/ceo/social" },
-          { label: "Campaigns", isCurrentPage: true },
-        ]}
-      />
+      <div className="px-2 sm:px-4 md:px-6 py-4 md:py-6">
+        <PageHeaderWithActions
+          title="Social Campaigns"
+          description="Manage your social media campaigns and marketing initiatives across all platforms"
+          breadcrumbs={[
+            { label: "CEO Dashboard", href: "/dashboard/ceo" },
+            { label: "Social Media", href: "/dashboard/ceo/social" },
+            { label: "Campaigns" },
+          ]}
+          actions={headerActions}
+        />
+      </div>
       
-      <main className="p-6">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Target className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Social Campaigns</h1>
-              </div>
-              <p className="text-muted-foreground">
-                Manage your social media campaigns and marketing initiatives
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
-              </Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Campaign
-              </Button>
-            </div>
-          </div>
+      <main className="px-2 sm:px-4 md:px-6 py-4 md:py-6 space-y-8">
+        {/* Overview Stats */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Budget"
+            value={`$${totalBudget.toLocaleString()}`}
+            description="Allocated budget"
+            icon={DollarSign}
+            trend={{ value: 15, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Total Spent"
+            value={`$${totalSpent.toLocaleString()}`}
+            description="Campaign spending"
+            icon={TrendingUp}
+            trend={{ value: 12, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Total Reach"
+            value={totalReach.toLocaleString()}
+            description="People reached"
+            icon={Users}
+            trend={{ value: 8, isPositive: true, period: "vs last month" }}
+          />
+          <StatCard
+            title="Conversions"
+            value={totalConversions.toString()}
+            description="Total conversions"
+            icon={Target}
+            trend={{ value: 5, isPositive: true, period: "vs last month" }}
+          />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">{campaigns.length}</p>
-                  <p className="text-xs text-muted-foreground">Total Campaigns</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Play className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold">{campaigns.filter(c => c.status === 'active').length}</p>
-                  <p className="text-xs text-muted-foreground">Active</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-purple-500" />
-                <div>
-                  <p className="text-2xl font-bold">{campaigns.reduce((sum, c) => sum + c.reach, 0).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Reach</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">${campaigns.reduce((sum, c) => sum + c.spent, 0).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Total Spent</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>
+              Navigate to related sections for campaign management
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ActionButtonGroup actions={quickActions} />
+          </CardContent>
+        </Card>
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All Campaigns</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
-          </TabsList>
+        {/* Campaigns Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Campaign Management
+            </CardTitle>
+            <CardDescription>
+              View and manage your social media campaigns
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="active">
+                  Active ({activeCampaigns.length})
+                </TabsTrigger>
+                <TabsTrigger value="completed">
+                  Completed ({completedCampaigns.length})
+                </TabsTrigger>
+                <TabsTrigger value="draft">
+                  Draft ({draftCampaigns.length})
+                </TabsTrigger>
+              </TabsList>
 
-          {/* All Campaigns Tab */}
-          <TabsContent value="all" className="space-y-6">
-            <div className="grid gap-6">
-              {campaigns.map((campaign) => (
-                <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        {getStatusIcon(campaign.status)}
-                        <div>
-                          <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                          <CardDescription>
-                            {campaign.platforms.join(", ")} • {campaign.duration} • {campaign.agent}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(campaign.status)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">{campaign.description}</p>
-                    
-                    <div className="flex items-center gap-2 mb-4">
-                      {campaign.platforms.map((platform) => (
-                        <div key={platform} className="flex items-center gap-1">
-                          {getPlatformIcon(platform)}
-                          <span className="text-xs">{platform}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {campaign.status === 'active' && (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Progress</span>
-                          <span className="text-sm text-muted-foreground">{calculateProgress(campaign)}%</span>
-                        </div>
-                        <Progress value={calculateProgress(campaign)} className="h-2" />
-                      </div>
-                    )}
-
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Budget:</span>
-                        <p className="font-medium">${campaign.budget.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Spent:</span>
-                        <p className="font-medium">${campaign.spent.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Reach:</span>
-                        <p className="font-medium">{campaign.reach.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Engagement:</span>
-                        <p className="font-medium">{campaign.engagement}%</p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 text-sm mt-4">
-                      <div>
-                        <span className="text-muted-foreground">Conversions:</span>
-                        <p className="font-medium">{campaign.conversions.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Posts:</span>
-                        <p className="font-medium">{campaign.posts}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Start Date:</span>
-                        <p className="font-medium">{formatDate(campaign.startDate)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">End Date:</span>
-                        <p className="font-medium">{formatDate(campaign.endDate)}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <BarChart3 className="h-4 w-4 mr-2" />
-                          Analytics
-                        </Button>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        {campaign.status === 'active' ? (
-                          <Button variant="outline" size="sm">
-                            <Pause className="h-4 w-4 mr-2" />
-                            Pause
-                          </Button>
-                        ) : (
-                          <Button variant="outline" size="sm">
-                            <Play className="h-4 w-4 mr-2" />
-                            Start
-                          </Button>
-                        )}
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Active Campaigns Tab */}
-          <TabsContent value="active" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Campaigns</CardTitle>
-                <CardDescription>Currently running campaigns and their performance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {campaigns.filter(c => c.status === 'active').map((campaign) => (
-                    <div key={campaign.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Play className="h-5 w-5 text-green-500" />
-                        <div>
-                          <h4 className="font-medium">{campaign.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {campaign.platforms.join(", ")} • {calculateProgress(campaign)}% complete
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">${campaign.spent.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">spent</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{campaign.reach.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">reach</p>
+              <TabsContent value="active" className="space-y-4">
+                <div className="grid gap-4">
+                  {activeCampaigns.map((campaign) => (
+                    <Card key={campaign.id} className="p-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4">
+                          <div className="p-3 rounded-lg bg-green-50">
+                            <Target className="h-6 w-6 text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg">{campaign.name}</h3>
+                              {getStatusBadge(campaign.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {campaign.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{campaign.platforms.join(', ')}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <BarChart3 className="h-4 w-4 mr-2" />
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
-                          <Button variant="outline" size="sm">
-                            <Pause className="h-4 w-4 mr-2" />
-                            Pause
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <BarChart3 className="h-4 w-4 mr-1" />
+                            Analytics
                           </Button>
                         </div>
                       </div>
-                    </div>
+                      
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">${campaign.spent.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Spent of ${campaign.budget.toLocaleString()}</div>
+                          <Progress value={(campaign.spent / campaign.budget) * 100} className="mt-2" />
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.reach.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Reach</div>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.conversions}</div>
+                          <div className="text-sm text-muted-foreground">Conversions</div>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.posts}</div>
+                          <div className="text-sm text-muted-foreground">Posts</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Progress:</span>
+                          <div className="flex-1 min-w-[200px]">
+                            <Progress value={calculateProgress(campaign)} className="h-2" />
+                          </div>
+                          <span className="text-sm font-medium">{calculateProgress(campaign)}%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {campaign.platforms.map(platform => (
+                            <div key={platform} className="flex items-center gap-1">
+                              {getPlatformIcon(platform)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </TabsContent>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Campaign Performance</CardTitle>
-                  <CardDescription>Overall campaign metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Reach</span>
-                      <span className="text-sm font-medium">104.7K</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Impressions</span>
-                      <span className="text-sm font-medium">156.8K</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Average Engagement</span>
-                      <span className="text-sm font-medium">5.4%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Conversions</span>
-                      <span className="text-sm font-medium">261</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Budget Overview</CardTitle>
-                  <CardDescription>Campaign spending and ROI</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Budget</span>
-                      <span className="text-sm font-medium">$6,000</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total Spent</span>
-                      <span className="text-sm font-medium">$3,530</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Remaining Budget</span>
-                      <span className="text-sm font-medium">$2,470</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Cost per Conversion</span>
-                      <span className="text-sm font-medium">$13.52</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Templates Tab */}
-          <TabsContent value="templates" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Campaign Templates</CardTitle>
-                <CardDescription>Pre-built campaign templates for common marketing initiatives</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Product Launch</CardTitle>
-                      <CardDescription>Comprehensive product launch campaign</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Duration:</span>
-                          <p className="font-medium">14 days</p>
+              <TabsContent value="completed" className="space-y-4">
+                <div className="grid gap-4">
+                  {completedCampaigns.map((campaign) => (
+                    <Card key={campaign.id} className="p-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4">
+                          <div className="p-3 rounded-lg bg-blue-50">
+                            <CheckCircle className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg">{campaign.name}</h3>
+                              {getStatusBadge(campaign.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {campaign.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{campaign.platforms.join(', ')}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">Platforms:</span>
-                          <p className="font-medium">LinkedIn, Twitter/X, Facebook</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Budget:</span>
-                          <p className="font-medium">$2,500</p>
+                        <div className="flex gap-2">
+                          <Link href={`/dashboard/ceo/social/analytics?campaign=${campaign.id}`}>
+                            <Button size="sm" variant="outline">
+                              <BarChart3 className="h-4 w-4 mr-1" />
+                              View Results
+                            </Button>
+                          </Link>
                         </div>
                       </div>
-                      <Button className="w-full mt-4">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Use Template
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Thought Leadership</CardTitle>
-                      <CardDescription>Establish industry authority and credibility</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Duration:</span>
-                          <p className="font-medium">90 days</p>
+                      
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">${campaign.spent.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Total Spent</div>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">Platforms:</span>
-                          <p className="font-medium">LinkedIn, Twitter/X</p>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.reach.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Total Reach</div>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">Budget:</span>
-                          <p className="font-medium">$1,500</p>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.conversions}</div>
+                          <div className="text-sm text-muted-foreground">Conversions</div>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.engagement}%</div>
+                          <div className="text-sm text-muted-foreground">Avg Engagement</div>
                         </div>
                       </div>
-                      <Button className="w-full mt-4">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Use Template
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Holiday Promotion</CardTitle>
-                      <CardDescription>Seasonal promotional campaigns</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Duration:</span>
-                          <p className="font-medium">30 days</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Platforms:</span>
-                          <p className="font-medium">Instagram, Facebook, Twitter/X</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Budget:</span>
-                          <p className="font-medium">$1,200</p>
-                        </div>
-                      </div>
-                      <Button className="w-full mt-4">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Use Template
-                      </Button>
-                    </CardContent>
-                  </Card>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+
+              <TabsContent value="draft" className="space-y-4">
+                <div className="grid gap-4">
+                  {draftCampaigns.map((campaign) => (
+                    <Card key={campaign.id} className="p-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4">
+                          <div className="p-3 rounded-lg bg-gray-50">
+                            <Clock className="h-6 w-6 text-gray-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg">{campaign.name}</h3>
+                              {getStatusBadge(campaign.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {campaign.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{campaign.platforms.join(', ')}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button size="sm">
+                            <Play className="h-4 w-4 mr-1" />
+                            Launch
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">${campaign.budget.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Budget</div>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.duration}</div>
+                          <div className="text-sm text-muted-foreground">Duration</div>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">{campaign.platforms.length}</div>
+                          <div className="text-sm text-muted-foreground">Platforms</div>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="font-semibold text-lg">-</div>
+                          <div className="text-sm text-muted-foreground">Not Started</div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </main>
     </>
+  );
+}
+
+export default function SocialCampaignsPage() {
+  return (
+    <SocialMediaProvider>
+      <SocialCampaignsContent />
+    </SocialMediaProvider>
   );
 } 

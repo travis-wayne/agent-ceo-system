@@ -62,6 +62,52 @@ import { TicketBadge } from "./ticket-badge";
 import { InboxBadge } from "./inbox-badge";
 import { useCommandPalette } from "@/providers/command-palette-provider";
 
+// Icon mapping function
+const getIconComponent = (iconName: string) => {
+  const iconMap: Record<string, React.ComponentType<any>> = {
+    IconDashboard,
+    IconUsers,
+    IconBuildingStore,
+    IconUserSearch,
+    IconTicket,
+    IconMail,
+    IconInnerShadowTop,
+    IconSettings,
+    IconHelp,
+    IconSearch,
+    IconUserCircle,
+    IconBuildingSkyscraper,
+    IconAd,
+    IconInbox,
+    IconRobot,
+    IconBuilding,
+    IconTrendingUp,
+    IconUserCheck,
+    IconHelpCircle,
+    IconBrain,
+    IconListCheck,
+    IconBulb,
+    IconMailBolt,
+    IconChartBar,
+    IconBrandTwitter,
+    IconGitBranch,
+    IconChartPie,
+    IconTarget,
+    IconPhone,
+    IconBriefcase,
+    IconMessageCircle,
+    IconReportAnalytics,
+    IconFileText,
+    IconEye,
+    IconAdjustments,
+    IconDatabase,
+    IconCpu,
+    IconShield,
+    IconDownload,
+  };
+  return iconMap[iconName];
+};
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
@@ -73,7 +119,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return pathname === path;
   };
 
-  // Sidebar navigation data
+  // Sidebar navigation data with string icon identifiers
   const data = {
     user: {
       name: session?.user?.name || "Guest",
@@ -83,7 +129,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     teams: [
       {
         name: "Agent CEO Platform",
-        logo: IconRobot,
+        logo: "IconRobot",
         plan: "Enterprise",
       },
     ],
@@ -91,164 +137,164 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "AI Agent CEO",
         url: "#",
-        icon: IconRobot,
+        icon: "IconRobot",
         isActive: true,
         items: [
           {
             title: "CEO Dashboard",
             url: "/dashboard/ceo",
-            icon: IconDashboard,
+            icon: "IconDashboard",
           },
           {
             title: "AI Agents",
             url: "/dashboard/ceo/agents",
-            icon: IconBrain,
+            icon: "IconBrain",
           },
           {
             title: "Tasks",
             url: "/dashboard/ceo/tasks",
-            icon: IconListCheck,
+            icon: "IconListCheck",
           },
           {
             title: "Strategic Intelligence",
             url: "/dashboard/ceo/strategic",
-            icon: IconBulb,
+            icon: "IconBulb",
           },
           {
             title: "Email Automation",
             url: "/dashboard/ceo/email",
-            icon: IconMailBolt,
+            icon: "IconMailBolt",
           },
           {
             title: "AI Chat",
             url: "/dashboard/ceo/chat",
-            icon: IconMessageCircle,
+            icon: "IconMessageCircle",
           },
           {
             title: "Data Analytics",
             url: "/dashboard/ceo/data",
-            icon: IconChartBar,
+            icon: "IconChartBar",
             items: [
               {
                 title: "Data Dashboard",
                 url: "/dashboard/ceo/data",
-                icon: IconChartBar,
+                icon: "IconChartBar",
               },
               {
                 title: "Data Sources",
                 url: "/dashboard/ceo/data/sources",
-                icon: IconDatabase,
+                icon: "IconDatabase",
               },
               {
                 title: "Data Processing",
                 url: "/dashboard/ceo/data/processing",
-                icon: IconCpu,
+                icon: "IconCpu",
               },
               {
                 title: "Data Quality",
                 url: "/dashboard/ceo/data/quality",
-                icon: IconShield,
+                icon: "IconShield",
               },
               {
                 title: "Data Export",
                 url: "/dashboard/ceo/data/export",
-                icon: IconDownload,
+                icon: "IconDownload",
               },
               {
                 title: "Data Settings",
                 url: "/dashboard/ceo/data/settings",
-                icon: IconSettings,
+                icon: "IconSettings",
               },
             ],
           },
           {
             title: "Social Media",
             url: "/dashboard/ceo/social",
-            icon: IconBrandTwitter,
+            icon: "IconBrandTwitter",
           },
           {
             title: "Workflows",
             url: "/dashboard/ceo/workflows",
-            icon: IconGitBranch,
+            icon: "IconGitBranch",
           },
         ],
       },
       {
         title: "Analytics & Insights",
         url: "#",
-        icon: IconReportAnalytics,
+        icon: "IconReportAnalytics",
         items: [
           {
             title: "Analytics Dashboard",
             url: "/dashboard/ceo/analytics",
-            icon: IconChartBar,
+            icon: "IconChartBar",
           },
           {
             title: "AI Insights",
             url: "/dashboard/ceo/analytics/insights",
-            icon: IconBulb,
+            icon: "IconBulb",
           },
           {
             title: "Visualizations",
             url: "/dashboard/ceo/analytics/visualizations",
-            icon: IconEye,
+            icon: "IconEye",
           },
           {
             title: "Reports",
             url: "/dashboard/ceo/analytics/reports",
-            icon: IconFileText,
+            icon: "IconFileText",
           },
           {
             title: "Settings",
             url: "/dashboard/ceo/analytics/settings",
-            icon: IconAdjustments,
+            icon: "IconAdjustments",
           },
         ],
       },
       {
         title: "CRM & Business",
         url: "#",
-        icon: IconBuilding,
+        icon: "IconBuilding",
         items: [
           {
             title: "CRM Dashboard",
             url: "/dashboard/crm",
-            icon: IconChartPie,
+            icon: "IconChartPie",
           },
           {
             title: "Leads",
             url: "/dashboard/crm/leads",
-            icon: IconTarget,
+            icon: "IconTarget",
           },
           {
             title: "Customers",
             url: "/dashboard/crm/customers",
-            icon: IconUserCircle,
+            icon: "IconUserCircle",
           },
           {
             title: "Businesses",
             url: "/dashboard/crm/businesses",
-            icon: IconBuildingSkyscraper,
+            icon: "IconBuildingSkyscraper",
           },
           {
             title: "Applications",
             url: "/dashboard/crm/applications",
-            icon: IconUserSearch,
+            icon: "IconUserSearch",
           },
           {
             title: "Tickets",
             url: "/dashboard/crm/tickets",
-            icon: IconTicket,
+            icon: "IconTicket",
           },
           {
             title: "Inbox",
             url: "/dashboard/crm/inbox",
-            icon: IconInbox,
+            icon: "IconInbox",
           },
           {
             title: "Advertising",
             url: "/dashboard/crm/ads",
-            icon: IconAd,
+            icon: "IconAd",
           },
         ],
       },
@@ -257,56 +303,60 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         name: "Market Analysis Q2",
         url: "#",
-        icon: IconTrendingUp,
+        icon: "IconTrendingUp",
       },
       {
         name: "Sales Automation",
         url: "#",
-        icon: IconUsers,
+        icon: "IconUsers",
       },
       {
         name: "Customer Success",
         url: "#",
-        icon: IconUserCheck,
+        icon: "IconUserCheck",
       },
     ],
     navSecondary: [
       {
         title: "Settings",
         url: "/settings",
-        icon: IconSettings,
+        icon: "IconSettings",
       },
       {
         title: "Status",
         url: "/status",
-        icon: IconHelpCircle,
+        icon: "IconHelpCircle",
       },
       {
         title: "Search",
         url: "#",
-        icon: IconSearch,
+        icon: "IconSearch",
         action: toggleCommandPalette,
       },
     ],
   };
 
-  // Update data with active states
+  // Update data with active states and convert icon strings to components
   const navMainWithActive = data.navMain.map((item) => ({
     ...item,
+    icon: getIconComponent(item.icon),
     isActive: isActivePath(item.url),
     items: item.items?.map((subItem) => ({
       ...subItem,
+      icon: subItem.icon ? getIconComponent(subItem.icon) : undefined,
       isActive: isActivePath(subItem.url),
     })),
   }));
 
   const projectsWithActive = data.projects.map((item) => ({
     ...item,
+    icon: getIconComponent(item.icon),
     isActive: isActivePath(item.url),
   }));
 
   const navSecondaryWithActive = data.navSecondary.map((item) => ({
     ...item,
+    icon: getIconComponent(item.icon),
     isActive: isActivePath(item.url),
   }));
 

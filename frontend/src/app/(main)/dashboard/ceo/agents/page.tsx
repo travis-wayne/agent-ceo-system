@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -209,22 +209,21 @@ export default function AgentManagementPage() {
   };
 
   const handleViewLogs = (agent: any) => {
-    toast.info(`Viewing logs for ${agent.name} - Coming soon!`);
+    toast.info(`Viewing logs for ${agent.name}`);
   };
 
   const handleViewAnalytics = (agent: any) => {
-    setSelectedAgent(agents.find(a => a.id === agent.id) || null);
-    window.location.href = `/dashboard/ceo/agents/analytics`;
+    toast.info(`Viewing analytics for ${agent.name}`);
   };
 
   // Create breadcrumbs
-  const breadcrumbs = [
+  const breadcrumbs = useMemo(() => [
     { label: "CEO Dashboard", href: "/dashboard/ceo" },
     { label: "AI Agents" }
-  ];
+  ], []);
 
-  // Create header actions
-  const headerActions = [
+  // Create header actions using useMemo to ensure client-side creation
+  const headerActions = useMemo(() => [
     {
       label: "Filters",
       onClick: () => {},
@@ -243,7 +242,7 @@ export default function AgentManagementPage() {
       icon: Plus,
       variant: "default" as const
     }
-  ];
+  ], [handleConfigureAll, handleDeployAgent]);
 
   // Transform agents from context to match the expected format for the UI
   const aiAgents = agents.map(agent => ({
