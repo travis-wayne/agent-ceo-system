@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useSocial } from "@/lib/social/social-context";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   Users,
   Plus,
@@ -146,12 +149,12 @@ function SocialAccountsContent() {
   ];
 
   const availablePlatforms = [
-    { name: "LinkedIn", icon: Linkedin, color: "text-blue-600", description: "Professional networking" },
-    { name: "Twitter/X", icon: Twitter, color: "text-black", description: "Microblogging platform" },
-    { name: "Facebook", icon: Facebook, color: "text-blue-500", description: "Social networking" },
-    { name: "Instagram", icon: Instagram, color: "text-purple-500", description: "Photo and video sharing" },
-    { name: "YouTube", icon: Youtube, color: "text-red-600", description: "Video platform" },
-    { name: "TikTok", icon: Videotape, color: "text-red-600", description: "Video platform" },
+    { name: "LinkedIn", icon: Linkedin, color: "text-blue-600", description: "Professional networking", bgColor: "bg-blue-50" },
+    { name: "Twitter/X", icon: Twitter, color: "text-black", description: "Microblogging platform", bgColor: "bg-gray-50" },
+    { name: "Facebook", icon: Facebook, color: "text-blue-500", description: "Social networking", bgColor: "bg-blue-50" },
+    { name: "Instagram", icon: Instagram, color: "text-purple-500", description: "Photo and video sharing", bgColor: "bg-purple-50" },
+    { name: "YouTube", icon: Youtube, color: "text-red-600", description: "Video platform", bgColor: "bg-red-50" },
+    { name: "TikTok", icon: Videotape, color: "text-red-600", description: "Short video platform", bgColor: "bg-red-50" },
   ];
 
   const headerActions = useMemo(() => [

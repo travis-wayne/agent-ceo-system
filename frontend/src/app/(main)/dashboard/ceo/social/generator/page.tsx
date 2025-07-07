@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useSocial } from "@/lib/social/social-context";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   Plus,
   Sparkles,
@@ -198,21 +201,9 @@ function ContentGeneratorContent() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "generated":
-        return <Badge className="bg-green-100 text-green-800">Generated</Badge>;
-      case "generating":
-        return <Badge className="bg-blue-100 text-blue-800">Generating</Badge>;
-      case "failed":
-        return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Content copied to clipboard');
   };
 
   return (

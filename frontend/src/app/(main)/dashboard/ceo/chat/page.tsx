@@ -629,7 +629,7 @@ export default function ChatPage() {
                         }}
                       />
                       <PromptInputActions>
-                        <PromptInputAction>
+                        <PromptInputAction tooltip="Send message">
                           <Button
                             size="sm"
                             type="submit"

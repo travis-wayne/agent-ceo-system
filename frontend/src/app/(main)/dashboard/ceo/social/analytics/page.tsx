@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSocial } from "@/lib/social/social-context";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   BarChart3,
   TrendingUp,
@@ -317,6 +320,61 @@ function SocialAnalyticsContent() {
             icon={TrendingUp}
             trend={{ value: 0.3, isPositive: true, period: "vs last month" }}
           />
+        </div>
+
+        {/* Quick Navigation */}
+        <div className="grid gap-4 md:grid-cols-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/ceo/social/accounts')}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <Users className="h-6 w-6 text-blue-500" />
+                <div>
+                  <p className="font-medium">Manage Accounts</p>
+                  <p className="text-sm text-muted-foreground">{accounts.filter(a => a.status === 'connected').length} connected</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/ceo/social/posts')}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <MessageSquare className="h-6 w-6 text-green-500" />
+                <div>
+                  <p className="font-medium">View Posts</p>
+                  <p className="text-sm text-muted-foreground">{posts.length} total posts</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/dashboard/ceo/social/campaigns')}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <Target className="h-6 w-6 text-purple-500" />
+                <div>
+                  <p className="font-medium">View Campaigns</p>
+                  <p className="text-sm text-muted-foreground">{campaigns.length} campaigns</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCreatePost}>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <Zap className="h-6 w-6 text-orange-500" />
+                <div>
+                  <p className="font-medium">Create Content</p>
+                  <p className="text-sm text-muted-foreground">New post or campaign</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}
